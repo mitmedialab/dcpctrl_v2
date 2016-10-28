@@ -81,7 +81,7 @@ static void mdlInitializeSizes(SimStruct *S)
     ssSetInputPortDirectFeedThrough(S, 0, 1);
 
     if (!ssSetNumOutputPorts(S, 1)) return;
-    ssSetOutputPortWidth(S, 0, 10);
+    ssSetOutputPortWidth(S, 0, 6);
     ssSetOutputPortDataType(S, 0, SS_UINT8 );
     ssSetNumSampleTimes(S, 1);
     ssSetNumRWork(S, 0);
@@ -245,12 +245,12 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     const real_T *u = (const real_T*) ssGetInputPortSignal(S,0);
     BOOLEAN_T    *y = ssGetOutputPortSignal(S,0);
     
-    char res[20];
-    BOOLEAN_T res1[20];
+    char res[12];
+    BOOLEAN_T res1[12];
     int i;
     float n;
     
-    for(i=0; i<10; i++)
+    for(i=0; i<6; i++)
     {
         res[i] = 48;
     }
@@ -260,7 +260,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     
     ftoa(n, res, 4);
     
-    for(i=0; i<10; i++)
+    for(i=0; i<6; i++)
     { 
         if(res[i] == '\0')
             res[i] = 48;
