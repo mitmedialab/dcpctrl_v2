@@ -4,11 +4,9 @@
 dt = 0.01; % Fundamental sampling time of controller
 t = linspace(0,100,10/dt);
 
-q = [(5*sin(0.1*t)+5)]';
-qd = [0;diff(q)];
+dist = 100; % Total distance in millimeters that the path should traverse
 
-traj.Time = t;
-traj.signals(1).values = q;
-traj.signals(2).values = qd;
+q = [(dist*sin(0.1*t))]';
+qd = [0;diff(q)];
 
 traj = timeseries([q,qd],t);
