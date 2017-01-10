@@ -65,10 +65,6 @@ external sensors
 % - J1: 50 to 5000
 % - J2 thru J4: 45 to 175
 % -- Note: J4 gain needs to be inverted - J4 has its PWM mapping backwards
-% Kp = struct('J1',0.3,'J2',0,'J3',0.3,'J4',0.5);
-% Kd = struct('J1',0.4,'J2',0,'J3',0.1,'J4',0.4);
-% Ki = struct('J1',0,'J2',0,'J3',0,'J4',0);
-% Kv = struct('J1',0.3,'J2',0,'J3',0.8,'J4',0.8);
 Kp = struct('J1',0.3,'J2',0,'J3',0.6,'J4',0.5);
 Kd = struct('J1',0,'J2',0,'J3',0.3,'J4',0);
 Ki = struct('J1',0,'J2',0,'J3',0,'J4',0);

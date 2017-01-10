@@ -7,11 +7,12 @@ directories
 %}
 
 %% Initialize path
-addpath('apps');
+addpath(genpath('apps'));
 addpath(genpath('robots'));
 addpath('lib');
 addpath('data');
 addpath('util')
+addpath('template');
 
 %% Initialize apps (might not be necessary...)
 
