@@ -62,6 +62,8 @@ J3PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',91000/160000,'
 % Anything less than 43000 all gives full speed
 J4PWMLim = struct('Max',155500/160000,'Min',43000/160000,'DBUpper',91000/160000,'DBLower',69000/160000);
 
+PWMLim = struct('J1',J1PWMLim,'J2',J2PWMLim,'J3',J3PWMLim,'J4',J4PWMLim);
+
 % Voltage/position conversion factors
 J1VtoAngVals = struct('ZeroVoltage',0,'SensLen','','a_len','','b_len','','c_len','','CountsRev',737280); % This is a direct revolute joint
 J2VtoAngVals = struct('ZeroVoltage',6.79,'SensLen',400,'a_len',283.978,'b_len',754.053,'c_len',666.334,'CountsRev',''); % This is a revolute joint, with piston in a linkage.
@@ -71,10 +73,10 @@ J4VtoAngVals = struct('ZeroVoltage',-9.925,'SensLen',3350,'a_len','','b_len','',
 %% Construct starting structure
 robot = struct('Name', 'DCP_V2');
 robot.PWMZero = 0.5;
-robot.Joint(1) = struct('Name','Joint 1','EncType','Rotary','Kp',Kp.J1,'Kd',Kd.J1,'Ki',Ki.J1,'Kv',Kv.J1,'GainInv',GainInv.J1,'moveThresh',moveThresh.J1,'pctMaxV',pctMaxV.J1,'PosLim',J1PosLim,'PWMLim',J1PWMLim,'PWM_zero',0.5,'PosSensParams',J1VtoAngVals);
-robot.Joint(2) = struct('Name','Joint 2','EncType','Linear','Kp',Kp.J2,'Kd',Kd.J2,'Ki',Ki.J2,'Kv',Kv.J2,'GainInv',GainInv.J2,'moveThresh',moveThresh.J2,'pctMaxV',pctMaxV.J2,'PosLim',J2PosLim,'PWMLim',J2PWMLim,'PWM_zero',0.5,'PosSensParams',J2VtoAngVals);
-robot.Joint(3) = struct('Name','Joint 3','EncType','Linear','Kp',Kp.J3,'Kd',Kd.J3,'Ki',Ki.J3,'Kv',Kv.J3,'GainInv',GainInv.J3,'moveThresh',moveThresh.J3,'pctMaxV',pctMaxV.J3,'PosLim',J3PosLim,'PWMLim',J3PWMLim,'PWM_zero',0.5,'PosSensParams',J3VtoAngVals);
-robot.Joint(4) = struct('Name','Joint 4','EncType','Linear','Kp',Kp.J4,'Kd',Kd.J4,'Ki',Ki.J4,'Kv',Kv.J4,'GainInv',GainInv.J4,'moveThresh',moveThresh.J4,'pctMaxV',pctMaxV.J4,'PosLim',J4PosLim,'PWMLim',J4PWMLim,'PWM_zero',0.5,'PosSensParams',J4VtoAngVals);
+robot.Joint(1) = struct('Name','Joint 1','EncType','Rotary','Kp',Kp.J1,'Kd',Kd.J1,'Ki',Ki.J1,'Kv',Kv.J1,'GainInv',GainInv.J1,'moveThresh',moveThresh.J1,'pctMaxV',pctMaxV.J1,'PosLim',J1PosLim,'PWMLim',J1PWMLim,'PWM_zero',0.5,'PosSensParams',J1VtoAngVals,'PWMDBUp',J1PWMLim.DBUpper,'PWMDBLo',J1PWMLim.DBLower,'PWMDBMax',J1PWMLim.Max,'PWMDBMin',J1PWMLim.Min);
+robot.Joint(2) = struct('Name','Joint 2','EncType','Linear','Kp',Kp.J2,'Kd',Kd.J2,'Ki',Ki.J2,'Kv',Kv.J2,'GainInv',GainInv.J2,'moveThresh',moveThresh.J2,'pctMaxV',pctMaxV.J2,'PosLim',J2PosLim,'PWMLim',J2PWMLim,'PWM_zero',0.5,'PosSensParams',J2VtoAngVals,'PWMDBUp',J2PWMLim.DBUpper,'PWMDBLo',J2PWMLim.DBLower,'PWMDBMax',J2PWMLim.Max,'PWMDBMin',J2PWMLim.Min);
+robot.Joint(3) = struct('Name','Joint 3','EncType','Linear','Kp',Kp.J3,'Kd',Kd.J3,'Ki',Ki.J3,'Kv',Kv.J3,'GainInv',GainInv.J3,'moveThresh',moveThresh.J3,'pctMaxV',pctMaxV.J3,'PosLim',J3PosLim,'PWMLim',J3PWMLim,'PWM_zero',0.5,'PosSensParams',J3VtoAngVals,'PWMDBUp',J3PWMLim.DBUpper,'PWMDBLo',J3PWMLim.DBLower,'PWMDBMax',J3PWMLim.Max,'PWMDBMin',J3PWMLim.Min);
+robot.Joint(4) = struct('Name','Joint 4','EncType','Linear','Kp',Kp.J4,'Kd',Kd.J4,'Ki',Ki.J4,'Kv',Kv.J4,'GainInv',GainInv.J4,'moveThresh',moveThresh.J4,'pctMaxV',pctMaxV.J4,'PosLim',J4PosLim,'PWMLim',J4PWMLim,'PWM_zero',0.5,'PosSensParams',J4VtoAngVals,'PWMDBUp',J4PWMLim.DBUpper,'PWMDBLo',J4PWMLim.DBLower,'PWMDBMax',J4PWMLim.Max,'PWMDBMin',J4PWMLim.Min);
 
 %% Generate 
 end
