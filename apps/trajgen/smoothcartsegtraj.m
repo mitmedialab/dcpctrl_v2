@@ -68,6 +68,8 @@ end
 % Can pre-blend here
 % Nx4xM, N
 
+qtrajs = {};
+qdtrajs = {};
 qrawtrajs = {};
 qdrawtrajs = {};
 segts = {};
@@ -88,6 +90,8 @@ for n = 1:nsegs
     qrawtraj = joint2raw_at40gw(robot, qtraj);
     qdrawtraj = jointvel2rawvel_at40gw(robot, qtraj, qdtraj);
 
+    qtrajs = [qtrajs;qtraj];
+    qdtrajs = [qdtrajs;qdtraj];
     qrawtrajs = [qrawtrajs;qrawtraj];
     qdrawtrajs = [qdrawtrajs;qdrawtraj];
     segts = [segts;ts];
@@ -116,7 +120,9 @@ for n = 1:nsegs
         qdtraj = cartvel2jointvel_at40gw(qtraj, xdtraj, usedjoints);
         qrawtraj = joint2raw_at40gw(robot, qtraj);
         qdrawtraj = jointvel2rawvel_at40gw(robot, qtraj, qdtraj);
-
+        
+        qtrajs = [qtrajs;qtraj];
+        qdtrajs = [qdtrajs;qdtraj];
         qrawtrajs = [qrawtrajs;qrawtraj];
         qdrawtrajs = [qdrawtrajs;qdrawtraj];
         segts = [segts;ts];

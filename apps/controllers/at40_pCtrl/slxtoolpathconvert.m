@@ -11,6 +11,8 @@ transforms them into a form usable under dcpctrl_v2.
 %}
 
 %% Set up temp variables for timeseries
+q_temp = [];
+qd_temp = [];
 qraw_temp = [];
 qdraw_temp = [];
 tool_temp = [];
@@ -22,6 +24,9 @@ toolmode = lightmode;
 trajlen = 0;
 for n = 1:length(qrawtrajs)
     trajlen = trajlen + sum(size(qrawtrajs{n},1));
+    
+    q_temp = [q_temp;qtrajs{n}];
+    qd_temp = [qd_temp;qdtrajs{n}];
     qraw_temp = [qraw_temp;qrawtrajs{n}];
     qdraw_temp = [qdraw_temp;qdrawtrajs{n}];
     tool_temp = [tool_temp;ones(size(qrawtrajs{n},1),1)*toolmode{n}];
@@ -31,10 +36,14 @@ end
 t_temp = linspace(0,trajlen*dt,trajlen);
 
 %% Create timeseries collection
+qseries = timeseries(q_temp,t_temp,'Name','q');
+qdseries = timeseries(qd_temp,t_temp,'Name','qd');
 qrawseries = timeseries(qraw_temp,t_temp,'Name','qraw');
 qdrawseries = timeseries(qdraw_temp,t_temp,'Name','qdraw');
 toolseries = timeseries(tool_temp,t_temp,'Name','tool');
 %traj = tscollection({qrawseries,qdrawseries},'Name','rawtraj');
+traj.q = qseries;
+traj.qd = qdseries;
 traj.qraw = qrawseries;
 traj.qdraw = qdrawseries;
 traj.tool = toolseries;
