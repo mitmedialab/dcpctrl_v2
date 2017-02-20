@@ -38,7 +38,8 @@ if vizflag
         end
         close_system('getrawpos_slx');
     end
-
+    
+    q0 = raw2joint_at40gw(robot, q0raw)
     xttraj = joint2cart_at40gw(raw2joint_at40gw(robot, cell2mat(qrawtrajs)));
     arm0 = joint2arm_at40gw(q0);
     seg0 = joint2cart_at40gw(raw2joint_at40gw(robot, qrawtrajs{1}));

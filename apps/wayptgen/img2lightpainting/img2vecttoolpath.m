@@ -1,4 +1,4 @@
-% IMG2TOOLPATH Converts an image to a toolpath for the DCP
+% IMG2VECTTOOLPATH Converts an image to a vector toolpath for the DCP
 
 %{
 Julian Leland, MIT Media Lab, 2016-08-02

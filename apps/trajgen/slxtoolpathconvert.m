@@ -17,8 +17,10 @@ qraw_temp = [];
 qdraw_temp = [];
 tool_temp = [];
 
-%% Change toolpath name
-toolmode = lightmode;
+%% Change toolpath name & get number of tool channels
+toolmode = tooltrajs;
+toolchans = length(tooltrajs{1}); % Assume all tool trajectories are the same size (they should be!)
+tool_vect = []; % Empty tool vector for each run
 
 %% Collect trajs and measure total trajectory length
 trajlen = 0;
@@ -29,7 +31,11 @@ for n = 1:length(qrawtrajs)
     qd_temp = [qd_temp;qdtrajs{n}];
     qraw_temp = [qraw_temp;qrawtrajs{n}];
     qdraw_temp = [qdraw_temp;qdrawtrajs{n}];
-    tool_temp = [tool_temp;ones(size(qrawtrajs{n},1),1)*toolmode{n}];
+    for m = 1:toolchans
+        tool_vect = [tool_vect,ones(size(qrawtrajs{n},1),1)*toolmode{n}(1,m)];
+    end
+    tool_temp = [tool_temp;tool_vect];
+    tool_vect = [];
 end
 
 %% Create time vector

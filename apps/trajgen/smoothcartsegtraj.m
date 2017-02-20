@@ -19,7 +19,7 @@ tacc = 0.01; % Desired Cartesian acceleration time (mm/s^2)
 spd = 100; % Desired Cartesian velocity, (mm/s)
 
 % Flags
-simflag = 0; % Flag to indicate whether to use default home position or measure home position of vehicle.
+simflag = 1; % Flag to indicate whether to use default home position or measure home position of vehicle.
 % 1 = use default home. 0 = measure current home
 
 rel = 1; % Flag for relative vs. absolute move. 
@@ -73,12 +73,12 @@ qdtrajs = {};
 qrawtrajs = {};
 qdrawtrajs = {};
 segts = {};
-lightmode = {};
+tooltrajs = {};
 usedjoints = logical([1 0 1 1]);
 i = 1;
 
 for n = 1:nsegs
-    lightmode{1,i} = 1;
+    tooltrajs{1,i} = 1;
     disp(['Pathing segment ', num2str(n),'...']);
     
     % Compute time estimates along segments
@@ -99,7 +99,7 @@ for n = 1:nsegs
     i = i + 1;
     if n < nsegs && any(waypts{n}(end,1:3) ~= waypts{n+1}(1,1:3))
         disp(['Pathing transition segment ', num2str(n),'...']);
-        lightmode{1,i} = 0;
+        tooltrajs{1,i} = 0;
         
         % Get the parameterized trajectory
         xf = waypts{n+1}(1,1:3);
@@ -150,7 +150,7 @@ view([60,20]);
 for m = 1:length(qrawtrajs)
     for n = 1:100:length(qrawtrajs{m})
         xc = joint2cart_at40gw(raw2joint_at40gw(robot,qrawtrajs{m}));
-        if lightmode{m}
+        if tooltrajs{m}
             scatter3(xc(n,1),xc(n,2),xc(n,3),'b');
             drawnow;
         else
