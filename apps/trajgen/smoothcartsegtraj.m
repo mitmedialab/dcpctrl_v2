@@ -19,7 +19,7 @@ tacc = 0.01; % Desired Cartesian acceleration time (mm/s^2)
 spd = 100; % Desired Cartesian velocity, (mm/s)
 
 % Flags
-simflag = 1; % Flag to indicate whether to use default home position or measure home position of vehicle.
+simflag = 0; % Flag to indicate whether to use default home position or measure home position of vehicle.
 % 1 = use default home. 0 = measure current home
 
 rel = 1; % Flag for relative vs. absolute move. 

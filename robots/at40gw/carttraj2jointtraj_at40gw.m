@@ -1,4 +1,4 @@
-function [ qtraj_comp ] = carttraj2jointtraj_at40gw( robot,xtraj_comp )
+function [ qtraj_comp ] = carttraj2jointtraj_at40gw( robot,xtraj_comp,q0raw )
 %CARTTRAJ2JOINTTRAJ_at40gw Convert task-space (Cartesian) trajectory to
 %joint-space for the AT40GW
 
@@ -23,9 +23,9 @@ xtraj = xtraj_comp(:,1:3);
 xdtraj = xtraj_comp(:,4:6);
 ts = xtraj_comp(:,7);
 
-%% Get q0 if not already specified
-qraw0 = robot.HomeRawPos;
-q0 = r2jfcn_at40gw(qraw0(1),qraw0(2),qraw0(3),qraw0(4));
+%% Get q0 from q0raw
+
+q0 = r2jfcn_at40gw(q0raw(1),q0raw(2),q0raw(3),q0raw(4));
 
 disp(['Current robot endpoint position;',num2str(q0)]);
 

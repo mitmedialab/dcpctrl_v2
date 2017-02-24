@@ -155,6 +155,11 @@ end
 trajwaypts = {cartwaypts,[0,0,0,0]};
 
 %% Create trajectory
+
+dt = 0.01; % Timestep for trajectory, s.
+spd = 100; % Cartesian velocity for trajectory, distance units/s
+tacc = 1; % Cartesian acceleration time, distance units/s^2.
+
 % Note: Increasing tacc creates gentler curves at corners
 traj_cond = waypts2carttraj(trajwaypts,0.01,100,1);
 
@@ -209,7 +214,24 @@ traj_reord{1} = [traj_cond{1}(:,3),traj_cond{1}(:,1),traj_cond{1}(:,2),traj_cond
 traj_reord{2} = traj_cond{2};
 
 %% Convert task-space trajectory to joint space
-qtraj = {carttraj2jointtraj_at40gw(robot,traj_reord{1})};
+
+simflag = 0;
+
+if simflag
+    q0raw = robot.HomeRawPos;
+else
+    open('getrawpos_slx.slx'); % Open SLX
+    simTime = get_param('getrawpos_slx','StopTime'); % Measure currently set simulation time
+    set_param('getrawpos_slx', 'SimulationCommand', 'start'); % Run SLX
+    while strcmp(get_param('getrawpos_slx','SimulationStatus'),'external')
+        % Wait while SLX executes so that q0raw shows up.
+        disp('Measuring robot current position - please wait.');
+        pause(str2num(simTime)+0.1); % Wait until just after simulation has stopped.
+    end
+    close_system('getrawpos_slx');
+end
+
+qtraj = {carttraj2jointtraj_at40gw(robot,traj_reord{1},q0raw)};
 
 qtrajs = {qtraj{1}(:,1:4)};
 qdtrajs = {qtraj{1}(:,5:8)};
