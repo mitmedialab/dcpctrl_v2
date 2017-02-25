@@ -44,6 +44,7 @@ numh = size(waypts,2)-1;
 
 %% Generate toolapth and time vector
 disp('Generating trajectory. Please stand by...');
+
 [xtraj, xdtraj] = mstraj2(waypts{1}(2:end,1:3),spd,[],waypts{1}(1,1:3),dt,tacc);
 ts = (0:(size(xtraj,1)-1)) .* dt;
 
@@ -54,7 +55,8 @@ for n = 1:numh
 end
     
 %% Recombine into carttraj
-carttraj = {[xtraj, xdtraj, ts'],htraj{:}};
+carttraj = {ts',[xtraj, xdtraj],htraj{:}};
+disp('Trajectory completed!');
 
 end
 

@@ -4,18 +4,38 @@
 Julian Leland, MIT Media Lab, 2016-08-02
 Imported to dcpctrl_v2 2017-01-23
 
+Edited to comply with Trajectory Input Standard Definition (02-2017) on
+2017-02-24
+
 %}
+
+%% Get list of all variables currently in workspace
+curvars = who; % Get current variables
+
+%% Set up user input parameters
+showfigs = 0; % Flag to show figures or suppress
+
+imh = 1500; % Height of image, mm.
+
+q = 20; % Pick every qth waypoint to actually draw when reducing waypoint depth
+
+% Define move parameters
+dt = 0.01; % Desired timestep, seconds.
+tacc = 0.01; % Desired Cartesian acceleration time (mm/s^2)
+spd = 100; % Desired Cartesian velocity, (mm/s)
 
 %% Import image and convert to grayscale
 %in_img = imread('AltecPNG.png','png'); % Altec logo
 in_img = imread('ADSKLogo_A.png','png');
 in_img = rgb2gray(in_img);
 bw_img = edge(in_img,'canny');
-imshow(bw_img);
+if showfigs
+    figure(1);
+    imshow(bw_img);
+end
 
 %% Define desired output size of image
 asr = size(bw_img,1)/size(bw_img,2); % Aspect ratio of image
-imh = 1500; % Height of image, mm.
 imw = imh/asr;
 
 xpos = 0; % Define x position of output image
@@ -30,22 +50,22 @@ out_img(:,2) = mapRange(out_img(:,2),min(out_img(:,2)),max(out_img(:,2)),0,imw);
 out_img(:,3) = mapRange(out_img(:,3),max(out_img(:,3)),min(out_img(:,3)),0,imh);
 
 %% OPTIONAL: Plot each point in sequence to see what the system is going to print
-%{
-scatter3(out_img(:,1),out_img(:,2),out_img(:,3),[],hsv(length(out_img)));
-hold on;
-plot3(out_img(1,1),out_img(1,2),out_img(1,3),'mx');
-hold off;
-%} 
-
-%{
-figure;
-hold on;
-for n = 1:length(out_img)
-    scatter3(out_img(n,1),out_img(n,2),out_img(n,3),'b');
-    drawnow;
+if showfigs
+    figure(2)
+    scatter3(out_img(:,1),out_img(:,2),out_img(:,3),[],hsv(length(out_img)));
+    hold on;
+    plot3(out_img(1,1),out_img(1,2),out_img(1,3),'mx');
+    hold off;
+    %{
+    figure(3);
+    hold on;
+    for n = 1:length(out_img)
+        scatter3(out_img(n,1),out_img(n,2),out_img(n,3),'b');
+        drawnow;
+    end
+    hold off;
+    %}
 end
-hold off;
-%}
 
 %% Set start point and re-order points to draw in sequence
 % Method from http://stackoverflow.com/questions/11631934/sort-coordinates-points-in-matlab
@@ -64,15 +84,18 @@ end
 result = result';
 
 %% OPTIONAL: Plot each point in sequence to make sure that system is filtering correctly
-%{
-figure;
-hold on;
-for n = 1:length(out_img)
-    scatter3(out_img(result(n),1),out_img(result(n),2),out_img(result(n),3),'b');
-    drawnow;
+% Commented out because it's super slow
+if showfigs
+    %{
+    figure(4);
+    hold on;
+    for n = 1:length(out_img)
+        scatter3(out_img(result(n),1),out_img(result(n),2),out_img(result(n),3),'b');
+        drawnow;
+    end
+    hold off;
+    %}
 end
-hold off;
-%}
 
 %% Sort out_img by result
 out_img_sorted = [];
@@ -81,16 +104,18 @@ for n = 1:length(out_img)
 end
 
 %% OPTIONAL: Plot each point in sequence to make sure that system is filtering correctly
-%{
-figure;
-view([60,20]);
-hold on;
-for n = 1:length(out_img_sorted)
-    scatter3(out_img_sorted(n,1),out_img_sorted(n,2),out_img_sorted(n,3),'b');
-    drawnow;
+if showfigs
+    %{
+    figure(5);
+    view([60,20]);
+    hold on;
+    for n = 1:length(out_img_sorted)
+        scatter3(out_img_sorted(n,1),out_img_sorted(n,2),out_img_sorted(n,3),'b');
+        drawnow;
+    end
+    hold off;
+    %}
 end
-hold off;
-%}
 
 %% Identify mean distance between points, and use this to set flags indicating when new section of image has been reached
 segflag = zeros(length(out_img_sorted),1);
@@ -111,7 +136,6 @@ end
 out_img_sorted = [out_img_sorted,ptdist,segflag];
 
 %% Pick every qth point to actually draw (reduce density of points)
-q = 20; % Pick every qth waypoint
 out_img_sm = [];
 for n = 1:length(out_img_sorted)
     if mod(n,q) == 0
@@ -123,18 +147,18 @@ for n = 1:length(out_img_sorted)
 end
 
 %% OPTIONAL: Plot each point in sequence to make sure that system is filtering correctly
-%%{
-figure;
-view([60,20]);
-hold on;
-for n = 1:length(out_img_sm)
-    scatter3(out_img_sm(n,1),out_img_sm(n,2),out_img_sm(n,3),'b');
-    drawnow;
+if showfigs
+    figure(6);
+    view([60,20]);
+    hold on;
+    for n = 1:length(out_img_sm)
+        scatter3(out_img_sm(n,1),out_img_sm(n,2),out_img_sm(n,3),'b');
+        drawnow;
+    end
+    axis equal
+    axis vis3d
+    hold off;
 end
-axis equal
-axis vis3d
-hold off;
-%}
 
 %% Split up into subsegments with index
 subsegts = {[]};
@@ -143,9 +167,9 @@ for n = 1:length(out_img_sm)
     if out_img_sm(n,5) == 1
         % disp('New segment!');
         segt_ct = segt_ct + 1;
-        subsegts{segt_ct} = [];
+        subsegts{segt_ct,1} = [];
     end
-    subsegts{segt_ct} = [subsegts{segt_ct};out_img_sm(n,:)];
+    subsegts{segt_ct,1} = [subsegts{segt_ct};out_img_sm(n,:)];
 end
 
 %% For each subsegment, add the first point back in to the end to close each segment
@@ -160,6 +184,68 @@ waypts = {}; % Keep waypoints for each segment separated
 waypts_comb = []; % Collect all waypoints into single trajectory
 
 for n = 1:length(subsegts)
-    waypts{n} = subsegts{n};
-    waypts_comb = [waypts_comb;subsegts{n}(:,:)];
+    waypts{n,1} = subsegts{n}(:,1:3);
+    waypts_comb = [waypts_comb;subsegts{n}(:,1:3)];
 end
+
+% At this point, waypts has the format (x,y,z). These are not
+% time-parametrized, and they don't include a tool vector yet (we will add
+% manually).
+
+%% Convert waypts to DCP task trajectory
+% Add dummy vectors to waypts
+for n = 1:size(waypts,1)
+    % This creates trajectories for 
+    waypts(n,2:5) = {[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0]};
+end
+
+xtraj = {}; % Generate empty cell array to hold DCP xtraj
+for n = 1:size(waypts,1)
+     xtraj(n,:) = waypts2carttraj(waypts(n,:),dt,spd,tacc);
+end
+
+%% Create real AT40GW task trajectory
+% Just copy the DCP move to the AT40GW, since the AT40 is the only part
+% that is moving
+xtraj(:,3) = xtraj(:,2);
+
+%% Set tool trajectory
+% For this particular trajectory, we assume that every odd row is ON, while
+% every even row is OFF
+for n = 1:size(xtraj,1)
+    if mod(n,2) % We are on an odd trajectory
+        xtraj{n,5}(:,3) = 1;
+    end
+end
+
+%% Set enable trajectory
+for n = 1:size(xtraj,1)
+    xtraj{n,6}(:,1) = 1; % AT40GW is active
+    xtraj{n,6}(:,3) = 1; % Tool is active 
+end
+
+%% OPTIONAL: Check trajectory to make sure it makes sense
+if showfigs
+    figure(1);
+    view([60,20]);
+    axis square
+    axis vis3d
+    hold on
+    for n = 1:size(qtraj,1)
+        if xtraj{n,5}(1,3) == 1
+            color = 'r';
+        else
+            color = 'b';
+        end
+        scatter3(xtraj{n,2}(:,1), xtraj{n,2}(:,2), xtraj{n,2}(:,3), color);
+        drawnow;
+        pause(0.2);
+    end
+    hold off
+end
+
+%% Clear all other variables except for xtraj; close figures
+curvars = {curvars{:},'xtraj'};
+clearvars('-except', curvars{:});
+clear curvars
+close all;
