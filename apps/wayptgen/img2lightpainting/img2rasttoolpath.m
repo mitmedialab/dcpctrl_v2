@@ -7,22 +7,39 @@ Julian Leland, MIT Media Lab
 
 This function converts an image to a rasterized toolpath for the DCP.
 
+Edited to comply with Trajectory Input Standard Definition (02-2017) on
+2017-02-25
+
 %}
 
+%% Get list of all variables currently in workspace
+curvars = who; % Get current variables
+
 %% Setup
-showfigs = 1; % Flag to display figures or suppress
+vizflag = 1; % Flag to display figures or suppress
+
+imh = 4000; % Height of image, mm.
+
+rastspc = 100; % Spacing between raster lines, mm'
+rastofst = 200; % Outwards offset to apply to image edges
 
 plotres = 10; % Display every plotres'th point when doing large scatter plots
+
+% Motion parameters
+dt = 0.1; % Timestep for trajectory, s.
+spd = 100; % Cartesian velocity for trajectory, distance units/s
+tacc = 1; % Cartesian acceleration time, distance units/s^2.
 
 cmap = get(gca,'ColorOrder');
 close all;
 
 %% Import image and convert to grayscale, find edges
 %in_img = imread('AltecPNG.png','png'); % Altec logo
-in_img = imread('ADSKLogo_A.png','png'); % Autodesk 'A' logo
+%in_img = imread('ADSKLogo_A.png','png'); % Autodesk 'A' logo
+in_img = imread('ReebokDelta.png','png'); % Reebok Delta logo
 in_img_gs = rgb2gray(in_img);
 bw_img = edge(in_img_gs,'canny');
-if showfigs
+if vizflag
     figure(1);
     subplot(3,1,1)
     imshow(in_img);
@@ -37,11 +54,7 @@ imrows = size(bw_img,1);
 imcols = size(bw_img,2);
 
 asr = imrows/imcols; % Aspect ratio of image
-imh = 1000; % Height of image, mm.
 imw = imh/asr;
-
-rastspc = 100; % Spacing between raster lines, mm'
-rastofst = 200; % Outwards offset to apply to image edges
 
 xpos = 0; % Define x position of output image
 
@@ -66,7 +79,7 @@ for n = 1:imrows
 end
 
 % Overlay plot to show edges & verify that they are correctly located.
-if showfigs
+if vizflag
     figure(2);
     imshow(in_img);
     hold on;
@@ -112,7 +125,7 @@ for n = (ymin_idx-baseofst):-1:ymax_idx
 end
 
 % Plot to show offset distance & final set of points
-if showfigs
+if vizflag
     figure(3);
     hold on;
     scatter(ledges(:,1),ledges(:,2),[],bsxfun(@times,ones(length(ledges),3),cmap(1,:)));
@@ -139,50 +152,53 @@ for n = 1:2:length(ledges_cond);
     end
 end
 
-cartwaypts = [waypts_list(:,1),waypts_list(:,2),zeros(size(waypts_list,1),1)]; % Add Z-position to waypoints list - assume zero.
+cartwaypts = [zeros(size(waypts_list,1),1),waypts_list(:,1),waypts_list(:,2)]; % Add X-position to waypoints list - assume zero.
 
-if showfigs
+if vizflag
     figure(4);
     hold on;
     scatter(ledges_cond(:,1),ledges_cond(:,2),[],'k');
     scatter(redges_cond(:,1),redges_cond(:,2),[],'k');
-    plot(cartwaypts(:,1),cartwaypts(:,2),'r')
+    plot(cartwaypts(:,2),cartwaypts(:,3),'r')
     hold off;
 end
 
-% Create waypoints vector for trajectory generation with empty zeroes for
-% tool commands. Since we assume light painting, leave spaces for H,S,V,K
-trajwaypts = {cartwaypts,[0,0,0,0]};
+%% Convert waypts to DCP task trajectory
+% This creates dummy trajectories for the AT40, KUKA , tool and enable
+waypts = {cartwaypts,[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0]};
 
-%% Create trajectory
-
-dt = 0.01; % Timestep for trajectory, s.
-spd = 100; % Cartesian velocity for trajectory, distance units/s
-tacc = 1; % Cartesian acceleration time, distance units/s^2.
-
+% Create trajectory
 % Note: Increasing tacc creates gentler curves at corners
-traj_cond = waypts2carttraj(trajwaypts,0.01,100,1);
+traj_cond = waypts2carttraj(waypts,dt,spd,tacc);
 
 % Plot over image
-if showfigs
+if vizflag
     figure(5);
     hold on;
     scatter(ledges_cond(:,1),ledges_cond(:,2),[],'k');
     scatter(redges_cond(:,1),redges_cond(:,2),[],'k');
-    scatter(traj_cond{1}(:,1),traj_cond{1}(:,2),0.5,'b')
+    scatter(traj_cond{2}(:,2),traj_cond{2}(:,3),0.5,'b')
     hold off;
 end
+
+
+%% Create real AT40GW task trajectory
+% Just copy the DCP move to the AT40GW, since the AT40 is the only part
+% that is moving
+
+traj_cond{3} = traj_cond{2};
+
 
 %% Identify correct tool color at each trajectory waypoint
 % Determine how much we need to scale input image by
 in_img_hsv = rgb2hsv(in_img);
 scale_img = imresize(in_img_hsv,imh/imrows,'nearest'); % Need to do nearest resizing, otherwise we get HSV values outside of permissible range
 
-if showfigs
+if vizflag
     figure(6);
     imshow(scale_img,'YData',[imh 1]);
     hold on;
-    scatter(traj_cond{1}(1:plotres:end,1),traj_cond{1}(1:plotres:end,2),1,'w')
+    scatter(traj_cond{2}(1:plotres:end,2),traj_cond{2}(1:plotres:end,3),1,'w')
     hold off;
 end
 
@@ -191,63 +207,49 @@ end
 % just do every point = full resolution.
 %rasterres = 1; % Resolution of raster. Light value will be sampled at every nth point
 
-for n = 1:length(traj_cond{1})
-    xycoord = round(traj_cond{1}(n,1:2));
+for n = 1:length(traj_cond{2})
+    xycoord = round(traj_cond{2}(n,2:3));
     if xycoord(1) > size(scale_img,2) || xycoord(1) < 1 % If we're outside the bounds of the image
-       traj_cond{2}(n,:) = [0,0,0,2500]; 
+       traj_cond{5}(n,:) = [0,0,0,2500,0,0]; 
     else
-        traj_cond{2}(n,:) = [scale_img(size(scale_img,1)-xycoord(2),xycoord(1),1),scale_img(size(scale_img,1)-xycoord(2),xycoord(1),2),scale_img(size(scale_img,1)-xycoord(2),xycoord(1),3),2500];
+        traj_cond{5}(n,:) = [scale_img(size(scale_img,1)-xycoord(2),xycoord(1),1),scale_img(size(scale_img,1)-xycoord(2),xycoord(1),2),scale_img(size(scale_img,1)-xycoord(2),xycoord(1),3),2500,0,0];
     end
 end
 
 % Plotting large scatter plots is obnoxious - use plotres toreduce density.
 
-if showfigs
+if vizflag
     figure(7);
     hold on;
-    scatter(traj_cond{1}(1:plotres:end,1),traj_cond{1}(1:plotres:end,2),[],[hsv2rgb(traj_cond{2}(1:plotres:end,1:3))]);
+    scatter(traj_cond{2}(1:plotres:end,2),traj_cond{2}(1:plotres:end,3),[],[hsv2rgb(traj_cond{5}(1:plotres:end,1:3))]);
 end
 
-%% Re-order trajectory so that it matches AT40GW plane (YZ plane)
-traj_reord = {};
-traj_reord{1} = [traj_cond{1}(:,3),traj_cond{1}(:,1),traj_cond{1}(:,2),traj_cond{1}(:,6),traj_cond{1}(:,4),traj_cond{1}(:,5),traj_cond{1}(:,7)];
-traj_reord{2} = traj_cond{2};
+%% Convert trajectory to structure
+xtraj = struct('t',traj_cond(:,1),'dcp',traj_cond(:,2),'at40',traj_cond(:,3),'kuka',traj_cond(:,4),'tool',traj_cond(:,5),'en',traj_cond(:,6));
 
-%% Convert task-space trajectory to joint space
+%% Set enable trajectory
+for n = 1:size(xtraj,1)
+    xtraj(n).en(:,1) = 1; % AT40GW is active
+    xtraj(n).en(:,3) = 1; % Tool is active 
+end
 
-simflag = 0;
-
-if simflag
-    q0raw = robot.HomeRawPos;
-else
-    open('getrawpos_slx.slx'); % Open SLX
-    simTime = get_param('getrawpos_slx','StopTime'); % Measure currently set simulation time
-    set_param('getrawpos_slx', 'SimulationCommand', 'start'); % Run SLX
-    while strcmp(get_param('getrawpos_slx','SimulationStatus'),'external')
-        % Wait while SLX executes so that q0raw shows up.
-        disp('Measuring robot current position - please wait.');
-        pause(str2num(simTime)+0.1); % Wait until just after simulation has stopped.
+%% OPTIONAL: Check trajectory to make sure it makes sense
+if vizflag
+    figure(8);
+    view([60,20]);
+    axis square
+    axis vis3d
+    hold on
+    for n = 1:size(xtraj,1)
+        scatter3(xtraj(n).dcp(1:plotres:end,1), xtraj(n).dcp(1:plotres:end,2), xtraj(n).dcp(1:plotres:end,3), 10.*(xtraj(n).tool(1:plotres:end,3)+0.1), hsv2rgb(xtraj(n).tool(1:plotres:end,1:3)));
+        drawnow;
+        pause(0.2);
     end
-    close_system('getrawpos_slx');
+    hold off
 end
 
-qtraj = {carttraj2jointtraj_at40gw(robot,traj_reord{1},q0raw)};
-
-qtrajs = {qtraj{1}(:,1:4)};
-qdtrajs = {qtraj{1}(:,5:8)};
-qrawtrajs = {j2rfcn_at40gw(qtraj{1}(:,1),qtraj{1}(:,2),qtraj{1}(:,3),qtraj{1}(:,4))};
-qdrawtrajs = {jointvel2rawvel_at40gw(robot,qtraj{1}(:,1:4),qtraj{1}(:,5:8))};
-tooltrajs = {traj_reord{2}};
-
-
-% Edit: not in future, not doing this here. Going to implement this in a different
-% function, so we can separate Cartesian trajectory generation from
-% joint-space trajectory conversion.
-
-%% Clean up workspace
-%{
-xtraj = traj_reord;
-input('Trajectory generation complete.\nPlease press ENTER to close figures and clear unused variables, or Ctrl-C to break:');
-clearvars -except xtraj robot
+%% Clear all other variables except for xtraj; close figures
+curvars = {curvars{:},'xtraj'};
+clearvars('-except', curvars{:});
+clear curvars
 close all;
-%}

@@ -28,8 +28,7 @@ trajectory is added for the KUKA as well.
 curvars = who; % Get current variables
 
 %% Setup 
-
-showfigs = 1; % Flag to show or hide figures
+vizflag = 1; % Flag to show or hide figures
 
 % Options for trajectory location: 
 % 'cur' = current location
@@ -78,24 +77,24 @@ disp(['Current robot endpoint position: [',num2str(q0),']']);
 disp('Ofsetting toolpath to current robot endpoint position...');
 x0 = joint2cart_at40gw(q0); % Note - this assumes the KUKA is in its default configuration
 % For now, these two offsets should be the same, but they might not always be.
-offset_dcp = x0 - qtraj{1,2}(1,1:3);
-offset_at40 = x0 - qtraj{1,3}(1,1:3);
+offset_dcp = x0 - qtraj(1).dcp(1,1:3);
+offset_at40 = x0 - qtraj(1).at40(1,1:3);
 for n = 1:size(qtraj,1)
     % Add offset to both AT40GW and DCP vectors
-    qtraj{n,2}(:,1:3) = bsxfun(@plus, qtraj{n,2}(:,1:3), offset_dcp);
-    qtraj{n,3}(:,1:3) = bsxfun(@plus, qtraj{n,3}(:,1:3), offset_at40);
+    qtraj(n).dcp(:,1:3) = bsxfun(@plus, qtraj(n).dcp(:,1:3), offset_dcp);
+    qtraj(n).at40(:,1:3) = bsxfun(@plus, qtraj(n).at40(:,1:3), offset_at40);
 end
 disp('Done!');
 
 %% OPTIONAL: Check that points for trajectories still look correct
-if showfigs
+if vizflag
     figure(1);
     view([60,20]);
     axis square
     axis vis3d
     hold on
     for n = 1:size(qtraj,1)
-        scatter3(qtraj{n,2}(:,1),qtraj{n,2}(:,2),qtraj{n,2}(:,3));
+        scatter3(qtraj(n).dcp(:,1),qtraj(n).dcp(:,2),qtraj(n).dcp(:,3));
         drawnow;
         pause(0.2);
     end
@@ -105,29 +104,45 @@ end
 %% Convert AT40GW points to joint space
 for n = 1:size(qtraj,1)
     disp(['Calculating joint position trajectory for segment ',num2str(n),'...']);
-    qtraj_temp = ikine_at40gw(qtraj{n,3}(:,1:3), q0, usedjoints);
+    qtraj_temp = ikine_at40gw(qtraj(n).at40(:,1:3), q0, usedjoints);
     disp('Done!');
 
     disp(['Calculating joint velocity trajectory for segment ',num2str(n),'...']);
-    qdtraj_temp = cartvel2jointvel_at40gw(qtraj_temp, qtraj{n,3}(:,4:6), usedjoints);
+    qdtraj_temp = cartvel2jointvel_at40gw(qtraj_temp, qtraj(n).at40(:,4:6), usedjoints);
     disp('Done!');
     
-    qtraj{n,3} = [qtraj_temp, qdtraj_temp];
+    qtraj(n).at40 = [qtraj_temp, qdtraj_temp];
 end
 disp('AT40GW joint-space toolpath completed!');
 
-%% Convert KUKA points to joint space - add as separate trajectory
-% NOTE: For now, we're not doing this - we're just putting in dummy values
 
-qtraj(:,6:7) = qtraj(:,5:6); % Shift over sideways
-for n = 1:size(qtraj,1)
-    qtraj(n,5) = {zeros(length(qtraj{n,1}),6)};
+%% Convert KUKA points to joint space (add as separate trajectory) and add extra column to en_traj
+% NOTE: For now, we're not doing this - we're just putting in dummy values
+qtraj_temp = struct2cell(qtraj)'; % Note - struct2cell transposes, so we need to transpose back
+qtraj_temp(:,6:7) = qtraj_temp(:,5:6); % Shift over sideways
+for n = 1:size(qtraj_temp,1)
+    qtraj_temp(n,5) = {zeros(length(qtraj_temp{n,1}),12)}; % This part should be 12 wide, for kuka_q and kuka_qd
 end
 
-%% Add extra column to en_traj to reflect KUKA joint toolpath
+% Add extra column to en to reflect kuka_q
 for n = 1:size(qtraj,1)
-    qtraj{n,7}(:,4) = qtraj{n,7}(:,3); % Copy tool to last position
-    qtraj{n,7}(:,3) = zeros(size(qtraj{n,7}(:,3)));
+    qtraj_temp{n,7}(:,4) = qtraj_temp{n,7}(:,3); % Copy tool to last position
+    qtraj_temp{n,7}(:,3) = zeros(size(qtraj_temp{n,7}(:,3)));
+end
+
+% Turn back into struct, and rename fields
+qtraj = cell2struct(qtraj_temp,{'t' 'dcp' 'at40' 'kuka_x' 'kuka_q' 'tool' 'en'},2);
+
+%% Verify that robots do not exceed task or joint limits
+% Eventually, we'll do this for the AT40, KUKA_x and KUKA_q, but now just
+% AT40
+at40_qtrajtemp = [];
+for n = 1:size(qtraj,1)
+    at40_qtrajtemp = [at40_qtrajtemp; qtraj(n).at40(:,1:4)];
+end
+exceeded = checkjointlimits_at40gw(robot, joint2raw_at40gw(robot,at40_qtrajtemp));
+if any(exceeded(:))
+    disp(['WARNING Joints exceeded limits in trajectory, joints are: ' num2str(find(any(exceeded,1)))]);
 end
 
 %% Clear all other variables except for qtraj; close figures

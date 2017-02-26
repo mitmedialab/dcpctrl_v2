@@ -11,20 +11,28 @@ This function generates a complete trajectory (NOT waypoints) for the ISO
 for light painting, with a different color corresponding to each leg of the
 trajectory.
 
+Edited to comply with Trajectory Input Standard Definition (02-2017) on
+2017-02-25
+
 %}
 
+%% Get list of all variables currently in workspace
+curvars = who; % Get current variables
+
 %% Define test parameters
-dt = 0.1;
+dt = 0.01;
 tacc = 1;
 spd = 200; % mm/s (cartesian)
 
 len = 2500; % Length of cube size, mm
-numreps = 1; % Number of times to move through trajectory
+numreps = 3; % Number of times to move through trajectory
 cornerdelay = 7; % Delay (in sec) at each corner of a trajectory
 enddelay = 15; % Delay (in sec) at end of each run.
 
-simflag = 1; % Flag to simulate at default home position (1), or to run at current position (0)
-robot = config_dcpv2;
+colors = [0 35 50 240 285]; % Hue values for light output
+
+vizflag = 1; % Flag to show images/simulations
+plotres = 10; % Display every plotres'th point when doing large scatter plots
 
 %% Generate cube
 % Robot endpoint is assumed to start at center of cube - we will need to
@@ -55,7 +63,88 @@ switch plntype
             C0];  
 end
 
+%% Create full waypts struct
+waypts = {}; % Keep waypoints for each segment separated
+waypts_comb = []; % Collect all waypoints into single trajectory
+
+% Add xtraj_0 to waypts
+for n = 1:size(xtraj_0,1)-1
+    waypts{n,1} = [xtraj_0(n,:);xtraj_0(n+1,:)];
+end
+
+% Copy numreps times
+if numreps > 1
+    waypts_0 = waypts;
+    for n = 2:numreps
+        waypts = [waypts;waypts_0];
+    end
+end
+
+% At this point, waypts has the format (x,y,z). These are not
+% time-parametrized, and they don't include a tool vector yet (we will add
+% manually).
+
+%% Convert waypts to DCP task trajectory
+% Add dummy vectors to waypts
+for n = 1:size(waypts,1)
+    % This creates dummy trajectories for the AT40, KUKA , tool and enable
+    waypts(n,2:5) = {[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0]};
+end
+
+% New struct format
+xtraj_temp = {}; % Generate empty cell array to hold DCP xtraj
+for n = 1:size(waypts,1)
+     xtraj_temp(n,:) = waypts2carttraj(waypts(n,:),dt,spd,tacc);
+end
+
+xtraj = struct('t',xtraj_temp(:,1),'dcp',xtraj_temp(:,2),'at40',xtraj_temp(:,3),'kuka',xtraj_temp(:,4),'tool',xtraj_temp(:,5),'en',xtraj_temp(:,6));
+
+%% Create real AT40GW task trajectory
+% Just copy the DCP move to the AT40GW, since the AT40 is the only part
+% that is moving
+
+%xtraj(:,3) = xtraj(:,2);
+for n = 1:size(xtraj,1)
+    xtraj(n).at40 = xtraj(n).dcp;
+end
+
+%% Set tool trajectory
+% For this trajectory, we cycle through five different colors.
+for n = 1:size(xtraj,1)
+    xtraj(n).tool(:,1) = colors(1,mod(n-1,5)+1)/360;
+    xtraj(n).tool(:,2) = 1;
+    xtraj(n).tool(:,3) = 1;
+end
+
+%% Set enable trajectory
+for n = 1:size(xtraj,1)
+    xtraj(n).en(:,1) = 1; % AT40GW is active
+    xtraj(n).en(:,3) = 1; % Tool is active 
+end
+
+%% OPTIONAL: Check trajectory to make sure it makes sense
+if vizflag
+    figure(8);
+    view([60,20]);
+    axis square
+    axis vis3d
+    hold on
+    for n = 1:size(xtraj,1)
+        scatter3(xtraj(n).dcp(1:plotres:end,1), xtraj(n).dcp(1:plotres:end,2), xtraj(n).dcp(1:plotres:end,3), 10.*(xtraj(n).tool(1:plotres:end,3)+0.1), hsv2rgb(xtraj(n).tool(1:plotres:end,1:3)));
+        drawnow;
+        pause(0.2);
+    end
+    hold off
+end
+
+%% Clear all other variables except for xtraj; close figures
+curvars = {curvars{:},'xtraj'};
+clearvars('-except', curvars{:});
+clear curvars
+close all;
+
 %% Get home position of robot & shift points to there
+%{
 if simflag
     q0raw = robot.HomeRawPos;
 else
@@ -75,6 +164,7 @@ x0 = joint2cart_at40gw(q0);
 
 xtraj_t = bsxfun(@plus, xtraj_0, x0);
 xtraj_t = [xtraj_t,ones(size(xtraj_t,1),1)];
+
 
 %% Replicate as many times as specified
 xtraj = xtraj_t'; % Transpose for speed
@@ -193,3 +283,4 @@ for i = 1:nsegs
         ttf = ttf + ts(end);
     end
 end
+%}

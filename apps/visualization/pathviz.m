@@ -1,3 +1,4 @@
+function[] = pathviz(robot,qrawtrajs,qdrawtrajs,ts,dt)
 % PATHVIZ Simple path vizualizer for DCPv.2
 
 
@@ -17,6 +18,8 @@ vizflag = 1;
 simflag = 1;
 wait4settle = 1; % Waits at end of each segment to stop moving
 tol = 50; % mm
+
+nsegs = 1; % Faking this to just print the whole thing.
 
 usedjoints = logical([1 0 1 1]);
 
@@ -102,7 +105,7 @@ for segi = segstart:nsegs
     % Setup for segment
     qrawtraj = qrawtrajs{segi};
     qdrawtraj = qdrawtrajs{segi};
-    ts = segts{segi};
+    % ts = segts{segi};
     tf = ts(end)+dt;
     npoints = size(qrawtraj,1);
     %lightcontrol(lightmode{segi})
