@@ -15,7 +15,7 @@ curvars = who; % Get current variables
 %% Set up user input parameters
 vizflag = 1; % Flag to show figures or suppress
 
-imh = 1500; % Height of image, mm.
+imh = 3000; % Height of image, mm.
 
 q = 20; % Pick every qth waypoint to actually draw when reducing waypoint depth
 
@@ -24,14 +24,18 @@ subsegt_lenthresh = 5; % If a subsegment is shorter than this number of segments
 subsegt_dist = 100; % Permissible distance in mm between subsegments for which no intermediate path will be made.
 
 % Define move parameters
-dt = 0.01; % Desired timestep, seconds.
-tacc = 0.01; % Desired Cartesian acceleration time (mm/s^2)
-spd = 100; % Desired Cartesian velocity, (mm/s)
+dt = 0.05; % Desired timestep, seconds.
+tacc = 0.1; % Desired Cartesian acceleration time (mm/s^2)
+spd = 125; % Desired Cartesian velocity, (mm/s)
+
+imcolor_rgb = [1,0,0]; % Desired image color in RGB
+imcolor_hsv = rgb2hsv(imcolor_rgb);
 
 %% Import image and convert to grayscale
 %in_img = imread('AltecPNG.png','png'); % Altec logo
-in_img = imread('ADSKLogo_A.png','png'); % Autodesk 'A' logo 
-%in_img = imread('ReebokDelta.png','png'); % Reebok Delta logo
+%in_img = imread('ADSKLogo_A.png','png'); % Autodesk 'A' logo 
+in_img = imread('ReebokDelta.png','png'); % Reebok Delta logo
+%in_img = imread('MIT_logo.png','png'); % MIT logo
 in_img = rgb2gray(in_img);
 bw_img = edge(in_img,'canny');
 if vizflag
@@ -259,8 +263,9 @@ end
 % every even row is OFF
 for n = 1:size(xtraj,1)
     if mod(n,2) % We are on an odd trajectory
-        % xtraj{n,5}(:,3) = 1;
-        xtraj(n).tool(:,3) = 1;
+        xtraj(n).tool(:,1) = imcolor_hsv(1);
+        xtraj(n).tool(:,2) = imcolor_hsv(2);
+        xtraj(n).tool(:,3) = imcolor_hsv(3);
     end
 end
 
@@ -272,7 +277,7 @@ end
 
 %% OPTIONAL: Check trajectory to make sure it makes sense
 if vizflag
-    figure(7);
+    finalXtraj = figure(8);
     view([60,20]);
     axis square
     axis vis3d
@@ -294,4 +299,4 @@ end
 curvars = {curvars{:},'xtraj'};
 clearvars('-except', curvars{:});
 clear curvars
-close all;
+close([1 2 3 4 5 6]);

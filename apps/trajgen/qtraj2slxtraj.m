@@ -16,7 +16,7 @@ using old-school plot methods.
 curvars = who; % Get current variables
 
 %% Setup
-vizflag = 1; % Flag to show or hide visualizations
+vizflag = 0; % Flag to show or hide visualizations
 
 %% Set up temp variables for timeseries
 traj_temp = {};
@@ -118,5 +118,4 @@ end
 %% Clear unneeded variables
 curvars = {curvars{:},'qtraj','dcp_x','dcp_xd','at40_q','at40_qd','kuka_x','kuka_xd','kuka_q','kuka_qd','tool','en'};
 clearvars('-except', curvars{:});
-clear curvars
-close all;
+clear curvars;

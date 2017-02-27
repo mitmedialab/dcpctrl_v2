@@ -117,7 +117,7 @@ packet = hex2dec(hexcode);
 %coment out if you only want the packet and don't want to send command to
 %lightbulb
 
-u = udp('255.255.255.255',56700); %lightbulb ip address and listening port
+u = udp('10.100.48.255',56700); %lightbulb ip address and listening port
 
 %'192.168.0.255'
 

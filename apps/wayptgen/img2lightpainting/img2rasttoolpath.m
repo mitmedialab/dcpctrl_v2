@@ -18,7 +18,7 @@ curvars = who; % Get current variables
 %% Setup
 vizflag = 1; % Flag to display figures or suppress
 
-imh = 4000; % Height of image, mm.
+imh = 2000; % Height of image, mm.
 
 rastspc = 100; % Spacing between raster lines, mm'
 rastofst = 200; % Outwards offset to apply to image edges
@@ -27,7 +27,7 @@ plotres = 10; % Display every plotres'th point when doing large scatter plots
 
 % Motion parameters
 dt = 0.1; % Timestep for trajectory, s.
-spd = 100; % Cartesian velocity for trajectory, distance units/s
+spd = 120; % Cartesian velocity for trajectory, distance units/s
 tacc = 1; % Cartesian acceleration time, distance units/s^2.
 
 cmap = get(gca,'ColorOrder');
@@ -35,8 +35,9 @@ close all;
 
 %% Import image and convert to grayscale, find edges
 %in_img = imread('AltecPNG.png','png'); % Altec logo
-%in_img = imread('ADSKLogo_A.png','png'); % Autodesk 'A' logo
-in_img = imread('ReebokDelta.png','png'); % Reebok Delta logo
+in_img = imread('ADSKLogo_A.png','png'); % Autodesk 'A' logo
+%in_img = imread('ReebokDelta.png','png'); % Reebok Delta logo
+%in_img = imread('MIT_logo.png','png'); % MIT logo
 in_img_gs = rgb2gray(in_img);
 bw_img = edge(in_img_gs,'canny');
 if vizflag
@@ -235,7 +236,7 @@ end
 
 %% OPTIONAL: Check trajectory to make sure it makes sense
 if vizflag
-    figure(8);
+    finalXtraj = figure;
     view([60,20]);
     axis square
     axis vis3d
@@ -252,4 +253,5 @@ end
 curvars = {curvars{:},'xtraj'};
 clearvars('-except', curvars{:});
 clear curvars
-close all;
+%close all;
+close([1 2 3 4 5 6 7]); % Leave figure 8 open so we can see rough idea of trajectory colors
