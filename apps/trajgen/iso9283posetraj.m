@@ -20,12 +20,12 @@ Edited to comply with Trajectory Input Standard Definition (02-2017) on
 curvars = who; % Get current variables
 
 %% Define test parameters
-dt = 0.01;
+dt = 0.1;
 tacc = 1;
 spd = 200; % mm/s (cartesian)
 
-len = 2500; % Length of cube size, mm
-numreps = 3; % Number of times to move through trajectory
+len = 3500; % Length of cube size, mm
+numreps = 1; % Number of times to move through trajectory
 cornerdelay = 7; % Delay (in sec) at each corner of a trajectory
 enddelay = 15; % Delay (in sec) at end of each run.
 

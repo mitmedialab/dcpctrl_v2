@@ -15,16 +15,18 @@ curvars = who; % Get current variables
 %% Set up user input parameters
 vizflag = 1; % Flag to show figures or suppress
 
-imh = 3000; % Height of image, mm.
+imh = 6000; % Height of image, mm.
+
+startofst = 300; % Offset in Y and Z, mm, from starting point of image, for start of trajectory
 
 q = 20; % Pick every qth waypoint to actually draw when reducing waypoint depth
 
-subsegt_lenthresh = 5; % If a subsegment is shorter than this number of segments, reject it.
+subsegt_lenthresh = 20; % If a subsegment is shorter than this number of segments, reject it.
 
 subsegt_dist = 100; % Permissible distance in mm between subsegments for which no intermediate path will be made.
 
 % Define move parameters
-dt = 0.05; % Desired timestep, seconds.
+dt = 0.1; % Desired timestep, seconds.
 tacc = 0.1; % Desired Cartesian acceleration time (mm/s^2)
 spd = 125; % Desired Cartesian velocity, (mm/s)
 
@@ -189,6 +191,16 @@ for n = 1:size(subsegts,1)
     end
 end
 
+%% Add start and end subsegments
+%{
+% Figure out where the start/end point should be
+start_segt = [0 min(out_img_sm(:,2))-startofst min(out_img_sm(:,3))-startofst 0 0];
+%}
+
+% Alternative: Start at middle of image
+start_segt = [0 imw/2 imh/2 0 0];
+subsegts_long = [start_segt;subsegts_long;start_segt];
+
 %% For each subsegment, add the first point back in to the end to close each segment
 % NOTE: This only really works for subsegments that are closed loops.
 % Linear segments won't play nice with this.
@@ -213,6 +225,7 @@ end
 
 % Add in last subsegment
 subsegts_join = [subsegts_join;subsegts_long{end}];
+
 %% Turn into waypts
 waypts = {}; % Keep waypoints for each segment separated
 waypts_comb = []; % Collect all waypoints into single trajectory
@@ -290,7 +303,7 @@ if vizflag
         end
         scatter3(xtraj(n).dcp(:,1), xtraj(n).dcp(:,2), xtraj(n).dcp(:,3), color);
         drawnow;
-        pause(0.2);
+        pause(0.5);
     end
     hold off
 end

@@ -34,7 +34,7 @@ vizflag = 1; % Flag to show or hide figures
 % 'cur' = current location
 % 'def' = default home location
 % [X Y Z] = absolute position in workspace
-trajtype = 'def';
+trajtype = 'cur';
 
 usedjoints = logical([1 0 1 1]); % Mask vector for which joints to use on the AT40GW
 
@@ -44,10 +44,12 @@ qtraj = xtraj;
 %% Locate trajectory in workspace
 
 if isnumeric(trajtype) && all(size(trajtype) == [1 3])
+    disp('Using defined X/Y/Z start position in DCP base frame');
     q0raw = ikine_at40gw(trajtype,robot.HomeRawPos,[1 0 1 1]);
 else
     switch trajtype
         case 'cur'
+            disp('Using DCP current starting position');
             % This function *kinda* works for using Simulink to get the robot's
             % current joint position. It's not ideal, though.
             open('getrawpos_slx.slx'); % Open SLX
@@ -61,6 +63,7 @@ else
             close_system('getrawpos_slx');
 
         case 'def'
+            disp('Using DCP standard starting position');
             q0raw = robot.HomeRawPos;
 
         otherwise
@@ -140,16 +143,24 @@ at40_qtrajtemp = [];
 for n = 1:size(qtraj,1)
     at40_qtrajtemp = [at40_qtrajtemp; qtraj(n).at40(:,1:4)];
 end
-exceeded = checkjointlimits_at40gw(robot, joint2raw_at40gw(robot,at40_qtrajtemp));
+at40_qrawtrajtemp = joint2raw_at40gw(robot,at40_qtrajtemp);
+exceeded = checkjointlimits_at40gw(robot, at40_qrawtrajtemp);
+%%
 if any(exceeded(:))
     disp(['WARNING Joints exceeded limits in trajectory, joints are: ' num2str(find(any(exceeded,1)))]);
+    exceededjoints = find(any(exceeded,1));
+    for n = 1:length(exceededjoints)
+        disp(['Joint ', num2str(exceededjoints(n)),': Max = ',num2str(max(at40_qrawtrajtemp(:,exceededjoints(n)))),',Min = ',num2str(min(at40_qrawtrajtemp(:,exceededjoints(n))))]);
+    end
+else
+    disp('Trajectory within joint limits.');
 end
 
 %% Clear all other variables except for qtraj; close figures
 curvars = {curvars{:},'qtraj'};
 clearvars('-except', curvars{:});
 clear curvars
-close all;
+close([1]);
 
 %{ 
 %% Old crap

@@ -18,16 +18,18 @@ curvars = who; % Get current variables
 %% Setup
 vizflag = 1; % Flag to display figures or suppress
 
-imh = 2000; % Height of image, mm.
+imh = 6000; % Height of image, mm.
 
-rastspc = 100; % Spacing between raster lines, mm'
+rastspc = 200; % Spacing between raster lines, mm'
 rastofst = 200; % Outwards offset to apply to image edges
 
-plotres = 10; % Display every plotres'th point when doing large scatter plots
+plotres = 20; % Display every plotres'th point when doing large scatter plots
+
+subsegt_dist = 100; % Permissible distance in mm between subsegments for which no intermediate path will be made.
 
 % Motion parameters
 dt = 0.1; % Timestep for trajectory, s.
-spd = 120; % Cartesian velocity for trajectory, distance units/s
+spd = 150; % Cartesian velocity for trajectory, distance units/s
 tacc = 1; % Cartesian acceleration time, distance units/s^2.
 
 cmap = get(gca,'ColorOrder');
@@ -35,8 +37,8 @@ close all;
 
 %% Import image and convert to grayscale, find edges
 %in_img = imread('AltecPNG.png','png'); % Altec logo
-in_img = imread('ADSKLogo_A.png','png'); % Autodesk 'A' logo
-%in_img = imread('ReebokDelta.png','png'); % Reebok Delta logo
+%in_img = imread('ADSKLogo_A.png','png'); % Autodesk 'A' logo
+in_img = imread('ReebokDelta.png','png'); % Reebok Delta logo
 %in_img = imread('MIT_logo.png','png'); % MIT logo
 in_img_gs = rgb2gray(in_img);
 bw_img = edge(in_img_gs,'canny');
@@ -164,13 +166,48 @@ if vizflag
     hold off;
 end
 
-%% Convert waypts to DCP task trajectory
-% This creates dummy trajectories for the AT40, KUKA , tool and enable
-waypts = {cartwaypts,[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0]};
+%% Add start and end subsegments
+% Alternative: Start at middle of image
+start_segt = [0 imw/2 imh/2];
+subsegts_long = {[start_segt; start_segt];cartwaypts;[start_segt; start_segt]};
 
-% Create trajectory
-% Note: Increasing tacc creates gentler curves at corners
-traj_cond = waypts2carttraj(waypts,dt,spd,tacc);
+%% Create segments to path between subsegments
+subsegts_join = {};
+for n = 1:size(subsegts_long,1)-1
+    subsegts_join = [subsegts_join;subsegts_long{n}];
+    % If the distance in any direction between the end of the current
+    % subsegment and the start of the next is greater than our threshold,
+    % then add an extra segment
+    if any(abs(subsegts_long{n}(end,:)-subsegts_long{n+1}(1,:)) >= subsegt_dist)
+        join_segt = [subsegts_long{n}(end,:);subsegts_long{n+1}(1,:)];
+        subsegts_join = [subsegts_join; join_segt];
+    end
+end
+
+% Add in last subsegment
+subsegts_join = [subsegts_join;subsegts_long{end}];
+
+%% Turn into waypts
+waypts = {}; % Keep waypoints for each segment separated
+waypts_comb = []; % Collect all waypoints into single trajectory
+
+for n = 1:length(subsegts_join)
+    waypts{n,1} = subsegts_join{n}(:,1:3);
+    waypts_comb = [waypts_comb;subsegts_join{n}(:,1:3)];
+end
+
+%% Convert waypts to DCP task trajectory
+% Add dummy vectors to waypts
+for n = 1:size(waypts,1)
+    % This creates dummy trajectories for the AT40, KUKA , tool and enable
+    waypts(n,2:5) = {[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0]};
+end
+
+% New struct format
+xtraj_temp = {}; % Generate empty cell array to hold DCP xtraj
+for n = 1:size(waypts,1)
+     xtraj_temp(n,:) = waypts2carttraj(waypts(n,:),dt,spd,tacc);
+end
 
 % Plot over image
 if vizflag
@@ -178,17 +215,15 @@ if vizflag
     hold on;
     scatter(ledges_cond(:,1),ledges_cond(:,2),[],'k');
     scatter(redges_cond(:,1),redges_cond(:,2),[],'k');
-    scatter(traj_cond{2}(:,2),traj_cond{2}(:,3),0.5,'b')
+    scatter(xtraj_temp{3,2}(:,2),xtraj_temp{3,2}(:,3),0.5,'b')
     hold off;
 end
-
 
 %% Create real AT40GW task trajectory
 % Just copy the DCP move to the AT40GW, since the AT40 is the only part
 % that is moving
 
-traj_cond{3} = traj_cond{2};
-
+xtraj_temp(:,3) = xtraj_temp(:,2);
 
 %% Identify correct tool color at each trajectory waypoint
 % Determine how much we need to scale input image by
@@ -199,21 +234,21 @@ if vizflag
     figure(6);
     imshow(scale_img,'YData',[imh 1]);
     hold on;
-    scatter(traj_cond{2}(1:plotres:end,2),traj_cond{2}(1:plotres:end,3),1,'w')
+    scatter(xtraj_temp{3,2}(1:plotres:end,2),xtraj_temp{3,2}(1:plotres:end,3),1,'w')
     hold off;
 end
-
+%%
 % Note: It turns out that increasing the raster resolution doesn't
 % substantially increase the time required to calculate traj_cond. We'll
 % just do every point = full resolution.
 %rasterres = 1; % Resolution of raster. Light value will be sampled at every nth point
 
-for n = 1:length(traj_cond{2})
-    xycoord = round(traj_cond{2}(n,2:3));
+for n = 1:length(xtraj_temp{3,2})
+    xycoord = round(xtraj_temp{3,2}(n,2:3));
     if xycoord(1) > size(scale_img,2) || xycoord(1) < 1 % If we're outside the bounds of the image
-       traj_cond{5}(n,:) = [0,0,0,2500,0,0]; 
+       xtraj_temp{3,5}(n,:) = [0,0,0,2500,0,0]; 
     else
-        traj_cond{5}(n,:) = [scale_img(size(scale_img,1)-xycoord(2),xycoord(1),1),scale_img(size(scale_img,1)-xycoord(2),xycoord(1),2),scale_img(size(scale_img,1)-xycoord(2),xycoord(1),3),2500,0,0];
+        xtraj_temp{3,5}(n,:) = [scale_img(size(scale_img,1)-xycoord(2),xycoord(1),1),scale_img(size(scale_img,1)-xycoord(2),xycoord(1),2),scale_img(size(scale_img,1)-xycoord(2),xycoord(1),3),2500,0,0];
     end
 end
 
@@ -222,11 +257,12 @@ end
 if vizflag
     figure(7);
     hold on;
-    scatter(traj_cond{2}(1:plotres:end,2),traj_cond{2}(1:plotres:end,3),[],[hsv2rgb(traj_cond{5}(1:plotres:end,1:3))]);
+    scatter(xtraj_temp{3,2}(1:plotres:end,2),xtraj_temp{3,2}(1:plotres:end,3),[],[hsv2rgb(xtraj_temp{3,5}(1:plotres:end,1:3))]);
 end
 
 %% Convert trajectory to structure
-xtraj = struct('t',traj_cond(:,1),'dcp',traj_cond(:,2),'at40',traj_cond(:,3),'kuka',traj_cond(:,4),'tool',traj_cond(:,5),'en',traj_cond(:,6));
+
+xtraj = struct('t',xtraj_temp(:,1),'dcp',xtraj_temp(:,2),'at40',xtraj_temp(:,3),'kuka',xtraj_temp(:,4),'tool',xtraj_temp(:,5),'en',xtraj_temp(:,6));
 
 %% Set enable trajectory
 for n = 1:size(xtraj,1)
@@ -236,7 +272,7 @@ end
 
 %% OPTIONAL: Check trajectory to make sure it makes sense
 if vizflag
-    finalXtraj = figure;
+    finalXtraj = figure(8);
     view([60,20]);
     axis square
     axis vis3d
