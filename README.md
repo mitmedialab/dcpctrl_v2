@@ -29,15 +29,15 @@ dcpctrl_v2/
 	
 	util/ -- Non-robot-specific utility functions
 
-/```
+```
 ## Basic Usage:
 To successfully use dcpctrl_v2, you need a DCP. Good luck!
 
 Once you have a DCP, the general procedure for using code in this library is:
 - Run init to set up environment
-- Create waypoints from input file using program like img2toolpath (/apps/wayptgen/img2lightpainting)
-- Create trajectory from waypoints using converter like smoothcartsegtraj (/apps/trajgen/)
-- Create Simulink timeseries trajectory from trajectory using converter like slxtoolpathconvert (/apps/controller/at40_pctrl)
+- Create waypoints and task-space trajectory from input file using program like img2vecttoolpath or img2rasttoolpath (/apps/wayptgen/img2lightpainting)
+- Create joint-space trajectory from task-space trajectory using converter like xtraj2qtraj (/apps/trajgen/)
+- Create Simulink timeseries trajectory from joint-space trajectory using converter like qtraj2slxtraj (/apps/controller/at40_pctrl)
 - Execute trajectory with controller like at40_pctrl (/apps/controller/at40_pctrl)
 
 ## Contact:
