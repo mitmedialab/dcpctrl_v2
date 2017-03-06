@@ -52,6 +52,7 @@ else
             disp('Using DCP current starting position');
             % This function *kinda* works for using Simulink to get the robot's
             % current joint position. It's not ideal, though.
+            %{
             open('getrawpos_slx.slx'); % Open SLX
             simTime = get_param('getrawpos_slx','StopTime'); % Measure currently set simulation time
             set_param('getrawpos_slx', 'SimulationCommand', 'start'); % Run SLX
@@ -61,6 +62,10 @@ else
                 pause(str2num(simTime)+0.1); % Wait until just after simulation has stopped.
             end
             close_system('getrawpos_slx');
+            %}
+            k = RT.Kernel;
+            d = k.loadDriver('Humusoft/MF644');
+            q0raw = aiRead(d, 1:4)
 
         case 'def'
             disp('Using DCP standard starting position');
