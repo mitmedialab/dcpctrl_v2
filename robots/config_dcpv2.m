@@ -103,4 +103,6 @@ robot.Joint(2) = struct('Name','Joint 2','EncType','Linear','Kp',Kp.J2,'Kd',Kd.J
 robot.Joint(3) = struct('Name','Joint 3','EncType','Linear','Kp',Kp.J3,'Kd',Kd.J3,'Ki',Ki.J3,'Kv',Kv.J3,'GainInv',GainInv.J3,'moveThresh',moveThresh.J3,'pctMaxV',pctMaxV.J3,'PosLim',J3PosLim,'PWMLim',J3PWMLim,'PWM_zero',0.5,'PosSensParams',J3VtoAngVals,'VelMap',J3VelMap,'PWMDBUp',J3PWMLim.DBUpper,'PWMDBLo',J3PWMLim.DBLower,'PWMDBMax',J3PWMLim.Max,'PWMDBMin',J3PWMLim.Min); %,'qdr2PWMmap',J3qdr2PWM);
 robot.Joint(4) = struct('Name','Joint 4','EncType','Linear','Kp',Kp.J4,'Kd',Kd.J4,'Ki',Ki.J4,'Kv',Kv.J4,'GainInv',GainInv.J4,'moveThresh',moveThresh.J4,'pctMaxV',pctMaxV.J4,'PosLim',J4PosLim,'PWMLim',J4PWMLim,'PWM_zero',0.5,'PosSensParams',J4VtoAngVals,'VelMap',J4VelMap,'PWMDBUp',J4PWMLim.DBUpper,'PWMDBLo',J4PWMLim.DBLower,'PWMDBMax',J4PWMLim.Max,'PWMDBMin',J4PWMLim.Min); %,'qdr2PWMmap',J4qdr2PWM);
 
+%% Add ts variable for simulation
+ts = 0.001; % Default value is 1 KHz simulation rate
 end

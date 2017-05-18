@@ -5,7 +5,7 @@ function X = joint2arm_at40gw( Q )
 %   Q - Mx4 vector of joint positions in degrees and mm, M is number of
 %   frames
 % OUTPUTS:
-%   X - 6x4xM matrix of joint positions in mmsi
+%   X - 6x4xM matrix of joint positions in mm
 
 pe = [1; 0; 0; 0];
 
