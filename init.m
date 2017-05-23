@@ -21,5 +21,5 @@ rmpath([pwd '/apps/examples/slxMDCPFcnDemo']);
 %% Initialize AT40GW functions
 %if exist('robot')~=1
 disp('Loading AT40GW configuration');
-robot = config_dcpv2;
+[robot, ts] = config_dcpv2;
 %end

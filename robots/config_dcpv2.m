@@ -1,4 +1,4 @@
-function robot = config_dcpv2
+function [robot, ts] = config_dcpv2
 % CONFIG_DCPV2 Set up configuration for DCP v.2
 % OUTPUT:
 %   robot - structure containing DCP configuration values
