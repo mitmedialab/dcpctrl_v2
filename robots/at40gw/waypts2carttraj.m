@@ -51,7 +51,7 @@ ts = (0:(size(xtraj,1)-1)) .* dt;
 %% Generate appropriately sized zero vectors for other trajectory components
 htraj = cell(1,numh);
 for n = 1:numh
-    htraj{n} = zeros(length(ts),size(waypts{n+1},2));
+    htraj{n} = ones(length(ts),size(waypts{n+1},2)).*waypts{n+1}; % Multiplying by waypts{n+1} preserves values that are passed in.
 end
     
 %% Recombine into carttraj
