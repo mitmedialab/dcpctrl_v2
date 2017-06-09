@@ -53,7 +53,9 @@ J1PosLim = struct('Max',1000000,'Min',-1000000);
 % different from the other axes. Don't change this!
 J2PosLim = struct('Max',-9.508,'Min',8.075);
 J3PosLim = struct('Max',9.912,'Min',-9.337);
-J4PosLim = struct('Max',9.488,'Min',-9.925);
+% J4PosLim = struct('Max',9.488,'Min',-9.925); % Commented out 2017-06-07
+% after moving J4 absolute sensor
+J4PosLim = struct('Max',9.577,'Min',-9.814);
 
 % PWM signal limits - generated from last known working parameters for
 % electric drive from config_at40gw.m. These values are in % duty cycle.
@@ -61,7 +63,7 @@ J1PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',89000/160000,'
 J2PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',93000/160000,'DBLower',70000/160000);
 J3PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',91000/160000,'DBLower',72000/160000);
 % Anything less than 43000 all gives full speed
-J4PWMLim = struct('Max',155500/160000,'Min',43000/160000,'DBUpper',91000/160000,'DBLower',69000/160000);
+J4PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',91000/160000,'DBLower',69000/160000);
 
 PWMLim = struct('J1',J1PWMLim,'J2',J2PWMLim,'J3',J3PWMLim,'J4',J4PWMLim);
 
