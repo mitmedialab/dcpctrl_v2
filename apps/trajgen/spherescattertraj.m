@@ -21,18 +21,19 @@ dt = 0.1;
 tacc = 1;
 spd = 100; % mm/s (cartesian)
 
-kuka_spd = 50; % mm/s
-kuka_tacc = 0.01;
+kuka_spd = 150; % mm/s
+kuka_tacc = 0.1;
 
 vizflag = 1; % Flag to show images/simulations
 plotres = 10; % Display every plotres'th point when doing large scatter plots
 
 %% Define positions and sphere sizes
-% In the future, this can be automatically imported.
-% Format is [xrel yrel zrel radius];
-spheretraj = [0 1000 -1000 120;
-              0 0     0    70;
-              0 -1000 1000 300];
+% Super simplified input format, [xrel yrel zrel radius]; 
+% In the future, this could be automatically imported.
+
+spheretraj = [0 1000 -1000 100;
+              0 0     0    50;
+              0 -1000 1000 150];
 
 at40_xtraj = spheretraj(:,1:3);
 kuka_radtraj = spheretraj(:,4);
