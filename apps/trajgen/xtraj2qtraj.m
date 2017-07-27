@@ -96,15 +96,32 @@ disp('Done!');
 
 %% OPTIONAL: Check that points for trajectories still look correct
 if vizflag
-    figure(1);
+    h = figure(1);
+    % filename = 'testAnimated.gif';
+    % axis tight manual;
     view([60,20]);
+    % xlim([4000,6500]);
+    % ylim([-1500,1000]);
+    % zlim([1000,3500]);
     axis square
     axis vis3d
+    grid on
     hold on
     for n = 1:size(qtraj,1)
         scatter3(qtraj(n).dcp(:,1),qtraj(n).dcp(:,2),qtraj(n).dcp(:,3));
         drawnow;
-        pause(0.2);
+        % pause(0.2);
+        % frame = getframe(h);
+        % im = frame2im(frame);
+        % [imind,cm] = rgb2ind(im,256); 
+        % Write to the GIF File 
+        %{
+        if n == 1 
+            imwrite(imind,cm,filename,'gif', 'Loopcount',inf); 
+        else 
+            imwrite(imind,cm,filename,'gif','WriteMode','append'); 
+        end
+        %}
     end
     hold off
 end
@@ -148,9 +165,9 @@ at40_qtrajtemp = [];
 for n = 1:size(qtraj,1)
     at40_qtrajtemp = [at40_qtrajtemp; qtraj(n).at40(:,1:4)];
 end
-at40_qrawtrajtemp = joint2raw_at40gw(robot,at40_qtrajtemp);
+at40_qrawtrajtemp = j2rfcn_at40gw(at40_qtrajtemp(:,1),at40_qtrajtemp(:,2),at40_qtrajtemp(:,3),at40_qtrajtemp(:,4));
 exceeded = checkjointlimits_at40gw(robot, at40_qrawtrajtemp);
-%%
+
 if any(exceeded(:))
     disp(['WARNING Joints exceeded limits in trajectory, joints are: ' num2str(find(any(exceeded,1)))]);
     exceededjoints = find(any(exceeded,1));

@@ -8,9 +8,16 @@ r2j = sym('r2j',[1,4]);
 
 
 %% Joint 1: Encoder counts to degrees
-counts2rev = 1/robot.Joint(1).PosSensParams.CountsRev;
+% Old version - used before analog encoder installed
+%counts2rev = 1/robot.Joint(1).PosSensParams.CountsRev;
+%r2j(1) = qr1 .* counts2rev .* 360;
 
-r2j(1) = qr1 .* counts2rev .* 360;
+jointV_Zero = robot.Joint(1).PosSensParams.ZeroVoltage; % Sensor voltage at zero position
+jointV_Max = robot.Joint(1).PosLim.Max; % Maximum sensor voltage
+jointV_Min = robot.Joint(1).PosLim.Min; % Minimum sensor voltage
+jointq_Max = robot.Joint(1).PosSensParams.PosqLim; % Joint position at jointV_Max
+jointq_Min = robot.Joint(1).PosSensParams.NegqLim; % Joint position at jointV_Min
+r2j(1) = ((qr1-jointV_Min).*(jointq_Max - jointq_Min))./(jointV_Max - jointV_Min) + jointq_Min;
 
 %% Joint 2: Voltages to degrees
 a = robot.Joint(2).PosSensParams.a_len; % Distance between joint axis and cylinder base axis

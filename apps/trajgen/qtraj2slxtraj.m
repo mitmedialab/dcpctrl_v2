@@ -10,13 +10,18 @@ Standard Definition (02-2017) and converts them into a form usable in
 Simulink. It also checks for trajectory validity, and plots the trajectory
 using old-school plot methods.
 
+NOTE: We still use a janky, old-school plotting method to simulate
+toolpaths. It's not accurate in terms of robot performance. If you close
+this window, execute the last section of this code manually to clean up the
+workspace of all intermediate variables.
+
 %}
 
 %% Get list of all variables currently in workspace
 curvars = who; % Get current variables
 
 %% Setup
-vizflag = 1; % Flag to show or hide visualizations
+vizflag = 0; % Flag to show or hide visualizations
 
 %% Set up temp variables for timeseries
 traj_temp = {};
@@ -109,7 +114,7 @@ en = timeseries(en_temp,t_temp,'Name','tool');
 % Super hacky, not reliable - replace later with better simulator.
 
 if vizflag
-    qrawtrajs = {j2rfcn_at40gw(at40_q_temp(:,1),at40_q_temp(:,2),at40_q_temp(:,3),at40_q_temp(:,4))};
+    qrawtrajs = {joint2raw_at40gw(robot,[at40_q_temp(:,1),at40_q_temp(:,2),at40_q_temp(:,3),at40_q_temp(:,4)])};
     qdrawtrajs = {jointvel2rawvel_at40gw(robot,at40_q_temp(:,1:4),at40_qd_temp(:,1:4))};
     dt = max(diff(t_temp));
     pathviz(robot, qrawtrajs, qdrawtrajs, t_temp, dt);

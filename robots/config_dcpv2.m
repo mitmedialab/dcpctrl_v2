@@ -45,8 +45,9 @@ pctMaxV = struct('J1',1,'J2',1,'J3',1,'J4',1);
 
 %% Machine geometric, controller & valve parameters
 % Position limits
-J1PosLim = struct('Max',1000000,'Min',-1000000);
-% J1PosLim = struct('Max',10,'Min',0); % Values for analog joint output sensor. This will need to be adjusted.
+% J1PosLim = struct('Max',1000000,'Min',-1000000); Used historically with
+% relative sensor
+J1PosLim = struct('Max',8.125,'Min',1.875); % Values for analog joint output sensor. This will need to be adjusted.
 % NOTE: J2PosLim has an opposite sense from the other joints. This is
 % because of the way that the J2 sensor is oriented relative to the
 % positive angle direction (as defined by the DH parameters), which is
@@ -61,21 +62,21 @@ J4PosLim = struct('Max',9.577,'Min',-9.814);
 % electric drive from config_at40gw.m. These values are in % duty cycle.
 J1PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',89000/160000,'DBLower',69000/160000);
 J2PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',93000/160000,'DBLower',70000/160000);
-J3PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',91000/160000,'DBLower',72000/160000);
+J3PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',0.56,'DBLower',0.45);
 % Anything less than 43000 all gives full speed
-J4PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',91000/160000,'DBLower',69000/160000);
+J4PWMLim = struct('Max',155500/160000,'Min',5000/160000,'DBUpper',0.55,'DBLower',0.45);
 
 PWMLim = struct('J1',J1PWMLim,'J2',J2PWMLim,'J3',J3PWMLim,'J4',J4PWMLim);
 
 % Voltage/position conversion factors
-J1VtoAngVals = struct('ZeroVoltage',0,'SensLen',0,'a_len',0,'b_len',0,'c_len',0,'CountsRev',737280); % This is a direct revolute joint.
+J1VtoAngVals = struct('ZeroVoltage',5,'SensLen',0,'a_len',0,'b_len',0,'c_len',0,'PosqLim',180,'NegqLim',-180,'CountsRev',737280); % This is a direct revolute joint.
 % NOTE: For unused parameters (e.g. a_len for J1), the type needs to be the
 % same as other parameters used elsewhere in the structure. Otherwise,
 % Simulink throws an error, which confusingly enough points to the
 % *previous* field.
-J2VtoAngVals = struct('ZeroVoltage',6.79,'SensLen',400,'a_len',283.978,'b_len',754.053,'c_len',666.334,'CountsRev',0); % This is a revolute joint, with piston in a linkage.
-J3VtoAngVals = struct('ZeroVoltage',-3.48,'SensLen',600,'a_len',1163.725,'b_len',387.085,'c_len',1082.457,'CountsRev',0); % This is a revolute joint, with piston in a linkage.
-J4VtoAngVals = struct('ZeroVoltage',-9.925,'SensLen',3350,'a_len',0,'b_len',0,'c_len',0,'CountsRev',0); % This is a prismatic joint, with piston NOT in a linkage - direct drive.
+J2VtoAngVals = struct('ZeroVoltage',6.79,'SensLen',400,'a_len',283.978,'b_len',754.053,'c_len',666.334,'PosqLim',0,'NegqLim',0,'CountsRev',0); % This is a revolute joint, with piston in a linkage.
+J3VtoAngVals = struct('ZeroVoltage',-3.48,'SensLen',600,'a_len',1163.725,'b_len',387.085,'c_len',1082.457,'PosqLim',0,'NegqLim',0,'CountsRev',0); % This is a revolute joint, with piston in a linkage.
+J4VtoAngVals = struct('ZeroVoltage',-9.925,'SensLen',3350,'a_len',0,'b_len',0,'c_len',0,'PosqLim',0,'NegqLim',0,'CountsRev',0); % This is a prismatic joint, with piston NOT in a linkage - direct drive.
 
 % Velocity mapping (note: these will be removed in the future, just using
 % for now to accomodate legacy code)

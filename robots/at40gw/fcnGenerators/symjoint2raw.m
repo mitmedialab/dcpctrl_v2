@@ -7,9 +7,18 @@ syms q1 q2 q3 q4
 
 j2r = sym('j2r',[1,4]);
 
-%% Joint 1: Degrees to encoder counts (measured relative to whatever start position was - we're still using an incremental encoder)
+%% Joint 1: Degrees to absolute encoder voltage
 
-j2r(1) = q1 ./ 360 .* robot.Joint(1).PosSensParams.CountsRev;
+% Old version - from encoder counts
+% j2r(1) = q1 ./ 360 .* robot.Joint(1).PosSensParams.CountsRev;
+
+% New version - encoder voltage
+jointV_Zero = robot.Joint(1).PosSensParams.ZeroVoltage; % Sensor voltage at zero position
+jointV_Max = robot.Joint(1).PosLim.Max; % Maximum sensor voltage
+jointV_Min = robot.Joint(1).PosLim.Min; % Minimum sensor voltage
+jointq_Max = robot.Joint(1).PosSensParams.PosqLim; % Joint position at jointV_Max
+jointq_Min = robot.Joint(1).PosSensParams.NegqLim; % Joint position at jointV_Min
+j2r(1) = ((q1-jointq_Min).*(jointV_Max - jointV_Min))./(jointq_Max - jointq_Min) + jointV_Min;
 
 
 %% Joint 2: Degrees to volts
