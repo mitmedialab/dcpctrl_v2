@@ -17,14 +17,14 @@ Edited to comply with Trajectory Input Standard Definition (02-2017) on
 %}
 
 %% Get list of all variables currently in workspace
-curvars = who; % Get current variables
+curvars = who; % Get current variables 
 
 %% Define test parameters
 dt = 0.1;
 tacc = 1;
-spd = 200; % mm/s (cartesian)
+spd = 100; % mm/s (cartesian)
 
-len = 3500; % Length of cube size, mm
+len = 1500; % Length of cube size, mm. Normally 3500
 numreps = 1; % Number of times to move through trajectory
 cornerdelay = 7; % Delay (in sec) at each corner of a trajectory
 enddelay = 15; % Delay (in sec) at end of each run.
@@ -72,13 +72,14 @@ for n = 1:size(xtraj_0,1)-1
     waypts{n,1} = [xtraj_0(n,:);xtraj_0(n+1,:)];
 end
 
-% Copy numreps times
-if numreps > 1
-    waypts_0 = waypts;
-    for n = 2:numreps
-        waypts = [waypts;waypts_0];
-    end
-end
+% Doing this after creation of task trajectory instead
+% % Copy numreps times
+% if numreps > 1
+%     waypts_0 = waypts;
+%     for n = 2:numreps
+%         waypts = [waypts;waypts_0];
+%     end
+% end
 
 % At this point, waypts has the format (x,y,z). These are not
 % time-parametrized, and they don't include a tool vector yet (we will add
@@ -86,15 +87,29 @@ end
 
 %% Convert waypts to DCP task trajectory
 % Add dummy vectors to waypts
-for n = 1:size(waypts,1)
-    % This creates dummy trajectories for the AT40, KUKA , tool and enable
-    waypts(n,2:5) = {[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0]};
-end
+% for n = 1:size(waypts,1)
+%     % This creates dummy trajectories for the AT40, KUKA , tool and enable
+%     waypts(n,2:5) = {[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0]};
+% end
 
 % New struct format
 xtraj_temp = {}; % Generate empty cell array to hold DCP xtraj
 for n = 1:size(waypts,1)
-     xtraj_temp(n,:) = waypts2carttraj(waypts(n,:),dt,spd,tacc);
+    waypts(n,2:5) = {[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0]}; 
+    xtraj_temp = [xtraj_temp;waypts2carttraj(waypts(n,:),dt,spd,tacc)]; % Create the movement trajectory for a segment
+    if n == size(waypts,1)
+        xtraj_temp = [xtraj_temp; dwelltraj(waypts(n,:),dt,enddelay)]; % Create the end delay trajectory if we're at the end of a run
+    else
+        xtraj_temp = [xtraj_temp; dwelltraj(waypts(n,:),dt,cornerdelay)]; % Otherwise, create corner delay trajectory
+    end
+end
+
+% Copy numreps times
+if numreps > 1
+    xtraj_temp_0 = xtraj_temp;
+    for n = 2:numreps
+        xtraj_temp = [xtraj_temp;xtraj_temp_0];
+    end
 end
 
 xtraj = struct('t',xtraj_temp(:,1),'dcp',xtraj_temp(:,2),'at40',xtraj_temp(:,3),'kuka',xtraj_temp(:,4),'tool',xtraj_temp(:,5),'en',xtraj_temp(:,6));

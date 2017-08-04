@@ -121,6 +121,8 @@ if vizflag
 end
 
 %% Clear unneeded variables
+% If you close visualizer window and want to clean up workspace, run this
+% segment!
 disp('Simulink trajectory created!');
 curvars = {curvars{:},'qtraj','dcp_x','dcp_xd','at40_q','at40_qd','kuka_x','kuka_xd','kuka_q','kuka_qd','tool','en'};
 clearvars('-except', curvars{:});
