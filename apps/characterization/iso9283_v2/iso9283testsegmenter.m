@@ -40,21 +40,25 @@ NOTES:
 
 %}
 
+%% Get current variables
+curvars = who; % Get current variables
+
 %% Set up convenience functions & variables
 %datarange = 7590:7800; % Range of data to plot for focus plots. Useful for debugging missed edges
-datarange = 1:500;
+datarange = 1:144453;
 colors = colormap(gcf); % Set up colormap
 close all;
 gendata = 0; % Flag to generate dataset
 fixdata = 0; % Flag to apply manual fixes to data.
-dt = 1/3; % Sample time for system, sec.
+dt = 0.01119; % Sample time for system, sec.
 
 %% Load data
 % Shorter dataset
 % load('ExampleISO9283Data.mat')
 % Longer dataset, proper ISO 9283
-data_temp = load('ExampleISO9283Data_Longer.mat','ExampleISO9283Data_Longer')
-data = data_temp.ExampleISO9283Data_Longer;
+%data_temp = load('ExampleISO9283Data_Longer.mat','ExampleISO9283Data_Longer');
+%data = data_temp.ExampleISO9283Data_Longer;
+data = test6Data;
 data_bkp = data; % Create backup copy, just in case.
 clear data_temp;
 
@@ -145,6 +149,14 @@ ylabel('Position, mm');
 legend('X','Y','Z');
 suptitle('Laser Tracker Data: 3D & Per-Axis'); 
 
+%% Truncate any inconsistent data from beginning of run - optional
+% Frequently, the DCP will start at an inconsistent position (a little ways
+% off from where the trajectory was generated). When this happens, the
+% repeatability for the center point will be SUPER bad. Truncating first
+% stopped point addresses this.
+data = data(round(12.25/dt):end,:);
+datarange = 1:length(data);
+
 %% Take FFT of data to see what frequencies exist
 % Because sampling frequency was so low - 3 Hz - we are unlikely to be able
 % to extract any meaningful information about vehicle vibration, etc.
@@ -226,8 +238,8 @@ xlim([-0.01,0.4]);
 %% Filter signals to detect edges - low-pass
 % Reference for this section: Lecture Notes Class 4, Sai Ravela, Appendix 2
 % Create Butterworth low-pass filter to reject all HF noise
-wp = 0.2; % Set passband edge to 0.2 Hz
-ws = 0.9; % Set stopband edge to 0.9 Hz
+wp = 0.001; % Set passband edge to 0.2 Hz
+ws = 0.05; % Set stopband edge to 0.9 Hz
 [n,wn] = buttord(wp,ws,3,60); % Calculate Butterworth filter cutoff and order
 [b,a] = butter(n,wn); % Calculate filter coefficients
 
@@ -237,8 +249,9 @@ data_normfilt = [filtfilt(b,a,data_norm(:,1:3)),data_norm(:,4)]; % Include time
 
 % Plot one axis to verify performance
 figure(5)
+axnum = 1;
 %plot(data_normfilt(:,4),data_normfilt(:,2),data_norm(:,4),data_norm(:,2))
-plot(data_normfilt(datarange,4),data_normfilt(datarange,2),data_norm(datarange,4),data_norm(datarange,2))
+plot(data_normfilt(datarange,4),data_normfilt(datarange,axnum),data_norm(datarange,4),data_norm(datarange,axnum))
 xlabel('Time, s');
 ylabel('Position, mm');
 title('Z Position: Low-Pass Filtering');
@@ -287,7 +300,7 @@ suptitle('Position & Derivative - X/Y/Z Directions');
 % Compare derivative to some threshold to determine what counts as
 % "stopped"
 data_stopped = []; % Empty vector for stopped state
-stop_dthresh = [2 2 2]; % Thresholds for determining "stopped" state for X, Y and Z derivative data
+stop_dthresh = [0.02 0.007 0.004]; % Thresholds for determining "stopped" state for X, Y and Z derivative data
 data_stopped = [(abs(d_datanormfilt(:,1)) <= stop_dthresh(1)),(abs(d_datanormfilt(:,2)) <= stop_dthresh(2)),(abs(d_datanormfilt(:,3)) <= stop_dthresh(3)),d_datanormfilt(:,4)];
 
 % Filter 1: Smooth stopped state data to reject spikes
@@ -306,7 +319,7 @@ data_stoppedfilt = [data_stopped(len:end-len,:),d_datanormfilt(:,4)];
 % data, while still ensuring that data transitions occur in a binary
 % fashion (either stopped or moving).
 %%{
-filtlen = 10; % Number of samples on either side to average. Total filter length is 2*filtlen+1.
+filtlen = 100; % Number of samples on either side to average. Total filter length is 2*filtlen+1.
 data_stoppedfilt = []; % Empty vector for filtered data
 for n = filtlen+1:length(data_stopped)-filtlen
     cursum(n,:) = sum(data_stopped(n-filtlen:n+filtlen,1:3),1);
@@ -488,9 +501,13 @@ startpos_idx = [min(find(startpos >= idxlim(1))),max(find(startpos <= idxlim(2))
 
 % Create stop zones and numbers
 for n = startpos_idx(1):startpos_idx(2)
-    text(data_out(startpos(n)+offst,1), mean(xl), num2str(n));
+    text(data_out(startpos(n)+offst,1), mean(yl), num2str(n));
     patch([data_out(startpos(n),1) data_out(stoppos(n),1) data_out(stoppos(n),1) data_out(startpos(n),1)],[yl(1) yl(1) yl(2) yl(2)],colors(data_out(startpos(n),6)+3));
 end
 set(gca,'children',flipud(get(gca,'children')))
-plot(data_out(datarange,1),ones(length(data_out(datarange,1)))*mean(xl)); % Create horizontal line to measure position in time
-    
+plot(data_out(datarange,1),ones(1,length(data_out(datarange,1)))*mean(yl)); % Create horizontal line to measure position in time
+
+%% Clear unneeded variables
+curvars = {curvars{:},'data_out','dt'};
+clearvars('-except', curvars{:});
+clear curvars;

@@ -25,9 +25,12 @@ curvars = who; % Get current variables
 
 %% Setup
 vizflag = 1;
+colors = get(gca,'ColorOrder'); % Set up colormap
 
 %% Open file
-fileID = fopen('DCP_test_7.txt'); % Type pathname to file here!
+%fileID = fopen('DCP_1.5x300mm_TEST.txt'); % Type pathname to file here!
+fileID = fopen('DCP_test_8_FIXED.txt'); % Type pathname to file here!
+%fileID = fopen('DCP_vectors_3.txt'); % Type pathname to file here!
 
 %% Separate based on newline delimiter
 segs = textscan(fileID,'%s');
@@ -43,15 +46,26 @@ end
 
 %% Plot each segment's parts
 if vizflag  
+    j = 1;
     h = figure(1);
     grid on
-    view(50,50)
+    view([60,20]);
+    axis square
+    axis vis3d
+    xlabel('X');
+    ylabel('Y');
+    zlabel('Z');
+    title({'Imported Waypoints and Segments'})
     hold on
     for n = 1:size(waypts,1)
         for m = 1:size(waypts{n},1)
-            scatter3(waypts{n}(m,2),waypts{n}(m,3),waypts{n}(m,4));
+            scatter3(waypts{n}(m,2),waypts{n}(m,3),waypts{n}(m,4),20,[colors(j,:)]);
             drawnow;
-            %pause(0.05)
+        end
+        plot3(waypts{n}(:,2),waypts{n}(:,3),waypts{n}(:,4),'Color',[colors(j,:)]);
+        j = j+1;
+        if j >= length(colors)
+            j = 1;
         end
     end
 end
@@ -62,3 +76,10 @@ curvars = {curvars{:},'waypts'};
 clearvars('-except', curvars{:});
 clear curvars;
 close([1]);
+
+%%
+%{
+for n=1:size(waypts,1)
+    waypts{n,1}(:,2:3) = [waypts{n,1}(:,3),waypts{n,1}(:,2)]
+end
+%}

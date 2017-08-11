@@ -156,7 +156,11 @@ if vizflag
     axis vis3d
     hold on
     for n = 1:size(xtraj,1)
-        scatter3(xtraj(n).dcp(1:plotres:end,1), xtraj(n).dcp(1:plotres:end,2), xtraj(n).dcp(1:plotres:end,3))%, 10.*(xtraj(n).tool(1:plotres:end,3)+0.1), hsv2rgb(xtraj(n).tool(1:plotres:end,1:3)));
+        if xtraj(n).en(:,3)
+            scatter3(xtraj(n).dcp(1:plotres:end,1), xtraj(n).dcp(1:plotres:end,2), xtraj(n).dcp(1:plotres:end,3),10,'r');
+        else
+            scatter3(xtraj(n).dcp(1:plotres:end,1), xtraj(n).dcp(1:plotres:end,2), xtraj(n).dcp(1:plotres:end,3),5,'k');
+        end
         drawnow;
         pause(0.2);
     end
