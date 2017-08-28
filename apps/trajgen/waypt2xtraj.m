@@ -21,7 +21,7 @@ curvars = who; % Get current variables
 % switch to using input timesteps
 dt = 0.1; % Timestep for trajectory, s.
 spd = 150; % Cartesian velocity for trajectory, distance units/s
-tacc = 10; % Cartesian acceleration time, distance units/s^2.
+tacc = 0.1; % Cartesian acceleration time, distance units/s^2.
 
 % Toolpath segmentation parameters
 % WARNING: Path segmentation super experimental/hacky. DO NOT USE
@@ -31,7 +31,7 @@ sizeCutoff = 800; % Cutoff size in mm for segmenting trajectories between KUKA a
 % box containing all points in a segment. If KUKA position correction
 % limits are ±250 mm, then this should be smaller than norm([500,500,500])
 
-plotres = 10;
+plotres = 1;
 
 vizflag = 1;
 
@@ -43,6 +43,7 @@ xtraj_temp = {}; % Generate empty cell array to hold DCP xtraj
 % Extract time and position from waypts
 for n = 1:size(waypts,1)
     waypts_pos{n,1} = waypts{n}(:,2:4);
+    waypts_tool{n,1} = waypts{n}(:,5:10);
     waypts_t{n,1} = waypts{n}(:,1);
 end
 
@@ -138,6 +139,7 @@ for n = 1:size(xtraj_temp,1)
     xtraj_temp{n,2} = [traj_posDes,traj_velDes];
 end
 
+
 %% Re-insert correct tool trajectory
 % For now, we're just inserting the first set of tool commands for each
 % segment for the entire segment. Eventually, we will map tool commands
@@ -147,6 +149,52 @@ for n = 1:size(xtraj_temp,1)
     xtraj_temp{n,5} = repmat(waypts{n}(1,5:10),size(xtraj_temp{n,5},1),1);
 end
 
+%% Re-insert correct tool trajectory
+% We need to map from
+
+for n = 1:size(xtraj_temp,1)
+    
+    % Calculate the distances between each point in the waypoints
+    waypt_dists = [];
+    for m = 1:size(waypts_pos{n},1)-1 % For each waypoint in this segment
+        tempdist = norm(waypts_pos{n}(m+1,:) - waypts_pos{n}(m,:));
+        waypt_dists = [waypt_dists;tempdist];
+    end
+    
+    % Sum these distances to return total distance at each waypoint
+    totalwayptdist = [0];
+    for m = 2:size(waypt_dists,1)+1
+        totalwayptdist(m,1) = waypt_dists(m-1,1)+totalwayptdist(m-1,1);
+    end
+    
+    % Now repeat for xtraj segments
+    % Calculate the distances between each point in the xtraj segment
+    traj_dists = [];
+    for m = 1:size(xtraj_temp{n,2},1)-1 % For each waypoint in this segment
+        tempdist = norm(xtraj_temp{n,2}(m+1,1:3) - xtraj_temp{n,2}(m,1:3));
+        traj_dists = [traj_dists;tempdist];
+    end
+    
+    % Sum these distances to return total distance at each point in the
+    % segment
+    totaltrajdist = [0];
+    for m = 2:size(traj_dists,1)+1
+        totaltrajdist(m,1) = traj_dists(m-1,1)+totaltrajdist(m-1,1);
+    end
+    
+    % Calculate percentage distances for total trajectory distances and
+    % total waypt distances
+    pctwayptdist = totalwayptdist/max(totalwayptdist);
+    pcttrajdist = totaltrajdist/max(totaltrajdist);
+    
+    % Interpolate waypoint positions and waypoint percentage distances
+    % against trajectory percentage distances
+    tool_act = interp1(pctwayptdist,waypts_tool{n},pcttrajdist);
+    
+    % Reincorporate new tool trajectory
+
+    xtraj_temp{n,5} = [tool_act];
+end
 %% Set enable trajectories appropriately
 % Here, we use sizeCutoff to either turn the KUKA on and AT40GW off, or
 % vis-versa

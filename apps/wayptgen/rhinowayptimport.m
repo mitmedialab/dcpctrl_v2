@@ -28,9 +28,8 @@ vizflag = 1;
 colors = get(gca,'ColorOrder'); % Set up colormap
 
 %% Open file
-%fileID = fopen('DCP_1.5x300mm_TEST.txt'); % Type pathname to file here!
-fileID = fopen('DCP_test_8_FIXED.txt'); % Type pathname to file here!
-%fileID = fopen('DCP_vectors_3.txt'); % Type pathname to file here!
+fileID = fopen('color wheel_2.txt'); % Type pathname to file here!
+%fileID = fopen('DCP_test_8_FIXED.txt'); % Type pathname to file here!
 
 %% Separate based on newline delimiter
 segs = textscan(fileID,'%s');
@@ -42,6 +41,13 @@ for n = 1:length(segs_temp)
     waypt_temp = textscan(segs_temp{n},'%f,%f,%f,%f,%f,%f,%f,%f,%f,%f','Delimiter',';');
     waypt_mat = [waypt_temp{:}];
     waypts{n,1} = waypt_mat;
+end
+
+%% Check for duplicates and delete if necessary
+for n = 1:size(waypts,1)
+    [~,waypts_idx,~] = unique(waypts{n,1}(:,1),'stable');
+    waypts_temp = waypts{n,1}(waypts_idx,:);
+    waypts{n,1} = waypts_temp;
 end
 
 %% Plot each segment's parts
